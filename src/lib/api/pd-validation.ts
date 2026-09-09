@@ -166,7 +166,7 @@ function mapCriterion(raw: PdCriterionRaw): PdCriterion {
   };
 }
 
-function mapLoan(raw: PdLoanPreviewRowRaw): PdLoanPreviewRow {
+export function mapPdLoanPreviewRow(raw: PdLoanPreviewRowRaw): PdLoanPreviewRow {
   const reportingMonth = raw.reportingMonth ?? raw.reporting_month ?? "";
   return {
     loanId: raw.loanId ?? raw.loan_id ?? "",
@@ -180,7 +180,7 @@ function mapLoan(raw: PdLoanPreviewRowRaw): PdLoanPreviewRow {
   };
 }
 
-function mapSegment(raw: PdSegmentPreviewRaw): PdSegmentPreview {
+export function mapPdSegmentPreview(raw: PdSegmentPreviewRaw): PdSegmentPreview {
   return {
     segment: raw.segment,
     matrix: raw.matrix,
@@ -221,8 +221,8 @@ export function mapPdValidationResult(raw: PdValidationResultRaw): PdPreviewResu
   return {
     status: raw.status,
     criteria,
-    loans: (preview?.loans ?? []).map(mapLoan),
-    segments: (preview?.segments ?? []).map(mapSegment),
+    loans: (preview?.loans ?? []).map(mapPdLoanPreviewRow),
+    segments: (preview?.segments ?? []).map(mapPdSegmentPreview),
     engineVersion: preview?.engineVersion ?? preview?.engine_version ?? "",
     isMock: false,
     issues: issues.length ? issues : undefined,
