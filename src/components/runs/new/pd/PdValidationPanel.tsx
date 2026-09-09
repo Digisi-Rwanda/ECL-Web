@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Hash, Info, Search } from "lucide-react";
-import { PdTransitionMatrix } from "@/components/results/segment/PdTransitionMatrix";
+import { PdObservedMatrixCard } from "@/components/pd/PdObservedMatrixCard";
 import { CriteriaGroup } from "./CriteriaGroup";
 import { CriteriaRow } from "./CriteriaRow";
 import { PdLoanPreviewTable, PD_LOAN_PAGE_SIZE } from "./PdLoanPreviewTable";
@@ -236,26 +236,10 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
             </span>
           </div>
           <div className="rx-panel-body">
-            <PdTransitionMatrix
-              matrix={activePreview.matrix}
-              destLabels={activePreview.destLabels}
-              amounts={activePreview.amounts}
+            <PdObservedMatrixCard
+              segment={activePreview}
+              caption="Observed P(row → col) next month — stored at compute and reused in Results."
             />
-            <div className="hr" style={{ margin: "16px 0", height: 1, background: "var(--border)" }} />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--sp-3)" }}>
-              <div className="kpi" style={{ flex: 1, minWidth: 140 }}>
-                <span className="kpi-label">Cure rate</span>
-                <span className="kpi-value">{(activePreview.stats.cureRate * 100).toFixed(1)}%</span>
-              </div>
-              <div className="kpi" style={{ flex: 1, minWidth: 140 }}>
-                <span className="kpi-label">Loans observed</span>
-                <span className="kpi-value">{activePreview.stats.loansObserved.toLocaleString()}</span>
-              </div>
-              <div className="kpi" style={{ flex: 1, minWidth: 140 }}>
-                <span className="kpi-label">Months of history</span>
-                <span className="kpi-value">{activePreview.stats.monthsOfHistory}</span>
-              </div>
-            </div>
           </div>
         </div>
       )}
