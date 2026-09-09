@@ -1,3 +1,4 @@
+import type { PdLoanPreviewRowRaw, PdSegmentPreviewRaw } from "./pd-validation";
 import { apiFetch } from "./client";
 
 // ── Raw backend shapes ────────────────────────────────────────────────────
@@ -60,10 +61,25 @@ export interface LoanDetailRaw extends LoanRowRaw {
   rundown?: MonthlyRundownRaw[];
 }
 
+export interface SegmentRateStatsRaw {
+  cureRate?: number;
+  cure_rate?: number;
+  avgLgd?: number | null;
+  avg_lgd?: number | null;
+  avgPd12m?: number | null;
+  avg_pd_12m?: number | null;
+}
+
 export interface SegmentViewRaw {
   name: string;
   pdMatrix?: [[number, number, number], [number, number, number], [number, number, number]];
   pd_matrix?: [[number, number, number], [number, number, number], [number, number, number]];
+  pdObservation?: PdSegmentPreviewRaw;
+  pd_observation?: PdSegmentPreviewRaw;
+  pdLoans?: PdLoanPreviewRowRaw[];
+  pd_loans?: PdLoanPreviewRowRaw[];
+  rateStats?: SegmentRateStatsRaw;
+  rate_stats?: SegmentRateStatsRaw;
   loans: LoanRowRaw[];
   meta?: {
     total: number;
