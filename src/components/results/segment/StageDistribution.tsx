@@ -17,9 +17,9 @@ interface StageDistributionProps {
 
 export function StageDistribution({
   mix,
-  cureRate = "7.3%",
-  avgLgd   = "41.2%",
-  avgPd    = "3.81%",
+  cureRate,
+  avgLgd,
+  avgPd,
 }: StageDistributionProps) {
   return (
     <div>
@@ -58,9 +58,9 @@ export function StageDistribution({
       {/* Summary stats */}
       <div className="sd-stats">
         {[
-          { k: "Cure rate",   v: cureRate },
-          { k: "Avg LGD",     v: avgLgd },
-          { k: "Avg PD (12m)", v: avgPd },
+          { k: "Cure rate", v: cureRate ?? "—" },
+          { k: "Avg LGD", v: avgLgd ?? "—" },
+          { k: "Avg PD (12m)", v: avgPd ?? "—" },
         ].map(({ k, v }) => (
           <div key={k} className="sd-stat-row">
             <span className="sk">{k}</span>
