@@ -13,6 +13,7 @@ import { ResultsEmptyState } from "./shared/ResultsEmptyState";
 import { useAuthedQuery } from "@/hooks/use-authed-query";
 import { useApiSession } from "@/hooks/use-api-session";
 import { fetchPortfolio, fetchSegmentResults, fetchLoanResults } from "@/lib/api/results";
+import { mapPdLoanPreviewRow, mapPdSegmentPreview } from "@/lib/api/pd-validation";
 import { fetchRuns, fetchRun, downloadRunArtifactFile, downloadRunWorkbooksBundle } from "@/lib/api/runs";
 import { exportCurrentViewCsv } from "@/lib/export-results-csv";
 import type { RunListItem } from "@/lib/runs-types";
@@ -207,6 +208,22 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
   const segmentPdMatrix = mapPdMatrix(
     segmentQuery.data?.pdMatrix ?? segmentQuery.data?.pd_matrix,
   );
+  const segmentPdObservationRaw =
+    segmentQuery.data?.pdObservation ?? segmentQuery.data?.pd_observation;
+  const segmentPdObservation = segmentPdObservationRaw
+    ? mapPdSegmentPreview(segmentPdObservationRaw)
+    : null;
+  const segmentPdLoans = (
+    segmentQuery.data?.pdLoans ?? segmentQuery.data?.pd_loans ?? []
+  ).map(mapPdLoanPreviewRow);
+  const rateStatsRaw = segmentQuery.data?.rateStats ?? segmentQuery.data?.rate_stats;
+  const segmentRateStats = rateStatsRaw
+    ? {
+        cureRate: rateStatsRaw.cureRate ?? rateStatsRaw.cure_rate ?? 0,
+        avgLgd: rateStatsRaw.avgLgd ?? rateStatsRaw.avg_lgd ?? null,
+        avgPd12m: rateStatsRaw.avgPd12m ?? rateStatsRaw.avg_pd_12m ?? null,
+      }
+    : null;
 
   const currentSeg = portfolioSegments.find((s) => s.name === curSeg) ?? portfolioSegments[0];
 
@@ -417,6 +434,9 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
                 isLoading={isSegmentLoading}
                 loans={segmentLoans}
                 pdMatrix={segmentPdMatrix}
+                pdObservation={segmentPdObservation}
+                pdLoans={segmentPdLoans}
+                rateStats={segmentRateStats}
                 currency={currency}
                 totalCount={segmentTotal}
                 page={segmentPage}
