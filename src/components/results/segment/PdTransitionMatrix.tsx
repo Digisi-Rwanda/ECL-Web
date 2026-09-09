@@ -19,7 +19,7 @@ export function PdTransitionMatrix({
   return (
     <div>
       <div style={{ overflowX: "auto" }}>
-        <table className="pd-matrix" aria-label="PD transition matrix">
+        <table className="pd-matrix" data-cols={cols.length} aria-label="PD transition matrix">
           <thead>
             <tr>
               <td className="mat-corner" />
