@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
+import { PdObservedMatrixCard } from "@/components/pd/PdObservedMatrixCard";
+import { PdLoanHistorySection } from "@/components/pd/PdLoanHistorySection";
 import { PdTransitionMatrix } from "./PdTransitionMatrix";
 import { StageDistribution } from "./StageDistribution";
 import { SegmentLoansTable } from "./SegmentLoansTable";
 import { SkeletonBlock } from "@/components/dashboard/shared/SkeletonBlock";
+import { reportingPeriodLabel } from "@/lib/api/pd-validation";
+import type { PdLoanPreviewRow, PdSegmentPreview } from "@/lib/new-run-types";
 import type { SegmentData, ExplorerFilter, LoanRow, PDMatrix } from "@/lib/results-types";
 
 const EMPTY_MATRIX: PDMatrix = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
@@ -13,12 +17,24 @@ function fmtAmount(n: number): string {
   return n.toLocaleString();
 }
 
+function fmtPct(value: number | null | undefined): string | undefined {
+  if (value == null || Number.isNaN(value)) return undefined;
+  return `${(value * 100).toFixed(2)}%`;
+}
+
 interface SegmentViewProps {
   segment: SegmentData;
   filter: ExplorerFilter;
   isLoading: boolean;
   loans?: LoanRow[];
   pdMatrix?: PDMatrix;
+  pdObservation?: PdSegmentPreview | null;
+  pdLoans?: PdLoanPreviewRow[];
+  rateStats?: {
+    cureRate: number;
+    avgLgd: number | null;
+    avgPd12m: number | null;
+  } | null;
   currency?: string;
   totalCount?: number;
   page?: number;
@@ -35,6 +51,9 @@ export function SegmentView({
   isLoading,
   loans = [],
   pdMatrix = EMPTY_MATRIX,
+  pdObservation = null,
+  pdLoans = [],
+  rateStats = null,
   currency = "USD",
   totalCount,
   page = 1,
@@ -71,9 +90,13 @@ export function SegmentView({
     { label: "Loans", cur: "", value: segment.loans.toLocaleString() },
   ];
 
+  const periodLabel = reportingPeriodLabel(pdLoans.map((row) => row.reportingMonthKey));
+  const matrixCaption = periodLabel
+    ? `${periodLabel} · ${segment.name} · observed transitions`
+    : `${segment.name} · observed transitions`;
+
   return (
     <div>
-      {/* KPI strip */}
       <div className="rx-kpis k3">
         {KPIS.map((kpi, i) => (
           <motion.div
@@ -92,17 +115,15 @@ export function SegmentView({
         ))}
       </div>
 
-      {/* Two-panel row */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "minmax(0, 1.35fr) minmax(0, 1fr)",
           gap: "var(--sp-4)",
           marginBottom: "var(--sp-4)",
         }}
         className="seg-panel-grid"
       >
-        {/* PD Matrix panel */}
         <motion.div
           className="rx-panel"
           initial={{ opacity: 0, y: 8 }}
@@ -112,15 +133,18 @@ export function SegmentView({
           <div className="rx-panel-head">
             <h3>PD transition matrix</h3>
             <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
-              monthly · {segment.name}
+              {pdObservation ? matrixCaption : `monthly · ${segment.name}`}
             </span>
           </div>
           <div className="rx-panel-body">
-            <PdTransitionMatrix matrix={pdMatrix} />
+            {pdObservation ? (
+              <PdObservedMatrixCard segment={pdObservation} caption="Same extract and P(row → col) formula as PD validation." />
+            ) : (
+              <PdTransitionMatrix matrix={pdMatrix} />
+            )}
           </div>
         </motion.div>
 
-        {/* Stage distribution panel */}
         <motion.div
           className="rx-panel"
           initial={{ opacity: 0, y: 8 }}
@@ -134,12 +158,26 @@ export function SegmentView({
             </span>
           </div>
           <div className="rx-panel-body">
-            <StageDistribution mix={segment.mix} />
+            <StageDistribution
+              mix={segment.mix}
+              cureRate={
+                rateStats
+                  ? `${(rateStats.cureRate * 100).toFixed(1)}%`
+                  : undefined
+              }
+              avgLgd={fmtPct(rateStats?.avgLgd)}
+              avgPd={fmtPct(rateStats?.avgPd12m)}
+            />
           </div>
         </motion.div>
       </div>
 
-      {/* Loans table */}
+      {pdLoans.length > 0 && (
+        <div style={{ marginBottom: "var(--sp-6)" }}>
+          <PdLoanHistorySection loans={pdLoans} segmentName={segment.name} />
+        </div>
+      )}
+
       <div
         style={{
           display: "flex",
@@ -154,7 +192,7 @@ export function SegmentView({
           Loans · {segment.name}
         </h3>
         <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
-          {segment.loans.toLocaleString()} loans
+          {segment.loans.toLocaleString()} loans · ECL
         </span>
       </div>
       <SegmentLoansTable
