@@ -4,12 +4,20 @@ import { Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { AuditEventRow } from "../AuditEventRow";
 import type { RunDetail } from "@/lib/runs-types";
+import { triggerCsvDownload } from "@/lib/export-results-csv";
 
 interface AuditTabProps {
   run: RunDetail;
 }
 
 export function AuditTab({ run }: AuditTabProps) {
+  function exportCsv() {
+    triggerCsvDownload(`ECL_${run.fullId}_audit.csv`, [
+      ["Time (UTC)", "Event", "Details", "By"],
+      ...run.auditEvents.map((e) => [e.time, e.title, e.description, e.who]),
+    ]);
+  }
+
   return (
     <div>
       {/* Header */}
@@ -21,6 +29,8 @@ export function AuditTab({ run }: AuditTabProps) {
           </p>
         </div>
         <button
+          onClick={exportCsv}
+          disabled={run.auditEvents.length === 0}
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             height: 28, padding: "0 10px",

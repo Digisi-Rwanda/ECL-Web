@@ -1,6 +1,11 @@
-import { AlertTriangle, Download } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { AlertTriangle, Download, Loader2 } from "lucide-react";
 import { InputFileCard } from "../InputFileCard";
-import type { RunDetail } from "@/lib/runs-types";
+import type { RunDetail, RunInputFile } from "@/lib/runs-types";
+import { useApiSession } from "@/hooks/use-api-session";
+import { downloadRunInput } from "@/lib/api/runs";
 
 interface InputsTabProps {
   run: RunDetail;
@@ -8,6 +13,22 @@ interface InputsTabProps {
 
 export function InputsTab({ run }: InputsTabProps) {
   const hasWarnings = (run.acceptedWarnings ?? 0) > 0;
+  const { token, tenantId } = useApiSession();
+  const [busy, setBusy] = useState<RunInputFile["type"] | "bundle" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function download(kind: RunInputFile["type"] | "bundle") {
+    if (!token || !tenantId || busy) return;
+    setError(null);
+    setBusy(kind);
+    try {
+      await downloadRunInput(token, tenantId, run.fullId, kind);
+    } catch {
+      setError("Download failed. Try again in a moment.");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   return (
     <div>
@@ -24,12 +45,24 @@ export function InputsTab({ run }: InputsTabProps) {
 
       {/* Input file cards */}
       {run.inputFiles.map((file) => (
-        <InputFileCard key={`${file.type}-${file.name}`} file={file} />
+        <InputFileCard
+          key={`${file.type}-${file.name}`}
+          file={file}
+          busy={busy === file.type}
+          onDownload={() => download(file.type)}
+        />
       ))}
 
       {/* Download all */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 12, marginTop: 16 }}>
+        {error && (
+          <span role="alert" style={{ fontSize: "var(--fs-caption)", color: "var(--danger)" }}>
+            {error}
+          </span>
+        )}
         <button
+          onClick={() => download("bundle")}
+          disabled={busy !== null || run.inputFiles.length === 0}
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             height: "var(--control-h)", padding: "0 14px",
@@ -41,7 +74,7 @@ export function InputsTab({ run }: InputsTabProps) {
           onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "var(--surface-sunken)")}
           onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "var(--surface)")}
         >
-          <Download size={14} />
+          {busy === "bundle" ? <Loader2 size={14} style={{ animation: "spin 0.7s linear infinite" }} /> : <Download size={14} />}
           Download all inputs (.zip)
         </button>
       </div>

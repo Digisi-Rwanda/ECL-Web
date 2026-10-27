@@ -312,8 +312,32 @@ function triggerBlobDownload(blob: Blob, filename: string): void {
 
 function filenameFromContentDisposition(header: string | null, fallback: string): string {
   if (!header) return fallback;
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (encoded) return decodeURIComponent(encoded[1]);
   const match = /filename="([^"]+)"/i.exec(header);
   return match?.[1] ?? fallback;
+}
+
+/** Downloads one uploaded input file ("PD" | "LGD" | "EAD") or all of them as a zip ("bundle"). */
+export async function downloadRunInput(
+  token: string,
+  tenantId: string,
+  runId: string,
+  kind: "PD" | "LGD" | "EAD" | "bundle",
+): Promise<void> {
+  const path = kind === "bundle" ? "inputs/bundle" : `inputs/${kind}/file`;
+  const res = await fetch(buildApiPath(`/tenants/${tenantId}/runs/${runId}/${path}`), {
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError("DOWNLOAD_FAILED", "Input file download failed.", res.status);
+  }
+  const fallback = kind === "bundle" ? `ECL_${runId}_inputs.zip` : `ECL_${runId}_${kind}.xlsx`;
+  triggerBlobDownload(
+    await res.blob(),
+    filenameFromContentDisposition(res.headers.get("Content-Disposition"), fallback),
+  );
 }
 
 export async function getDownloadUrl(

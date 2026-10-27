@@ -14,7 +14,7 @@ function escapeCsv(value: string | number): string {
   return text;
 }
 
-function triggerCsvDownload(filename: string, rows: (string | number)[][]): void {
+export function triggerCsvDownload(filename: string, rows: (string | number)[][]): void {
   const content = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
   const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);

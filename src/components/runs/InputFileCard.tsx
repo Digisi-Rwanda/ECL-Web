@@ -1,12 +1,14 @@
-import { Check, AlertTriangle, Download } from "lucide-react";
+import { Check, AlertTriangle, Download, Loader2 } from "lucide-react";
 import { InputBadge } from "./shared/InputBadge";
 import type { RunInputFile } from "@/lib/runs-types";
 
 interface InputFileCardProps {
   file: RunInputFile;
+  busy?: boolean;
+  onDownload?: () => void;
 }
 
-export function InputFileCard({ file }: InputFileCardProps) {
+export function InputFileCard({ file, busy = false, onDownload }: InputFileCardProps) {
   const statusPill =
     file.validationStatus === "ok" ? (
       <span className="pill pill-success" style={{ height: 18 }}>
@@ -47,8 +49,11 @@ export function InputFileCard({ file }: InputFileCardProps) {
         }}
         onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "var(--surface-sunken)")}
         onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = "var(--surface)")}
+        onClick={onDownload}
+        disabled={busy}
+        aria-label={`Download ${file.name}`}
       >
-        <Download size={12} />
+        {busy ? <Loader2 size={12} style={{ animation: "spin 0.7s linear infinite" }} /> : <Download size={12} />}
         Download
       </button>
     </div>
