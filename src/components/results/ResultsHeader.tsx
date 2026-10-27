@@ -6,7 +6,7 @@ import type { RunContext } from "@/lib/results-types";
 import type { RunListItem } from "@/lib/runs-types";
 import { RunSwitcher } from "./RunSwitcher";
 
-export type ExportKind = "csv" | "summary" | "bundle";
+export type ExportKind = "csv" | "pd" | "summary" | "bundle";
 
 interface ResultsHeaderProps {
   runContext: RunContext;
@@ -19,6 +19,7 @@ interface ResultsHeaderProps {
   onDensityToggle: () => void;
   onRunSelect: (run: RunListItem) => void;
   onExportCurrentView?: () => void;
+  onExportPdWorkbook?: () => void;
   onExportFullWorkbook?: () => void;
   onExportWorkbooksBundle?: () => void;
 }
@@ -34,6 +35,7 @@ export function ResultsHeader({
   onDensityToggle,
   onRunSelect,
   onExportCurrentView,
+  onExportPdWorkbook,
   onExportFullWorkbook,
   onExportWorkbooksBundle,
 }: ResultsHeaderProps) {
@@ -121,6 +123,23 @@ export function ResultsHeader({
                   <Download size={14} className="mp-ic" aria-hidden />
                 )}
                 Current view (.csv)
+              </button>
+              <div className="mp-sep" role="separator" />
+              <button
+                className="mp-item"
+                role="menuitem"
+                disabled={exportDisabled || exportBusy !== null}
+                onClick={() => {
+                  onExportPdWorkbook?.();
+                  setExportOpen(false);
+                }}
+              >
+                {exportBusy === "pd" ? (
+                  <Loader2 size={14} className="mp-ic" aria-hidden style={{ animation: "spin 0.7s linear infinite" }} />
+                ) : (
+                  <Download size={14} className="mp-ic" aria-hidden />
+                )}
+                PD term structure (.xlsx)
               </button>
               <button
                 className="mp-item"

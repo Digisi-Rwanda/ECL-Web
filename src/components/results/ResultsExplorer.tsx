@@ -272,14 +272,14 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
     (level === "loan" && !currentLoan) ||
     (level === "segment" && !curSeg);
 
-  async function handleExportFullWorkbook() {
+  async function handleExportArtifact(kind: "PD_CALCS" | "ECL_SUMMARY", label: string) {
     if (!token || !tenantId || !runId || exportDisabled) return;
     setExportError(null);
-    setExportBusy("summary");
+    setExportBusy(kind === "PD_CALCS" ? "pd" : "summary");
     try {
-      await downloadRunArtifactFile(token, tenantId, runId, "ECL_SUMMARY");
+      await downloadRunArtifactFile(token, tenantId, runId, kind);
     } catch {
-      setExportError("Could not download the full results workbook. Try again in a moment.");
+      setExportError(`Could not download the ${label}. Try again in a moment.`);
     } finally {
       setExportBusy(null);
     }
@@ -341,7 +341,8 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
           }
           onRunSelect={handleRunSelect}
           onExportCurrentView={handleExportCurrentView}
-          onExportFullWorkbook={handleExportFullWorkbook}
+          onExportPdWorkbook={() => handleExportArtifact("PD_CALCS", "PD term structure workbook")}
+          onExportFullWorkbook={() => handleExportArtifact("ECL_SUMMARY", "full results workbook")}
           onExportWorkbooksBundle={handleExportWorkbooksBundle}
         />
 

@@ -1,16 +1,109 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, BarChart3, MoreVertical, RefreshCw, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft, Download, BarChart3, ChevronDown, Loader2, MoreVertical, RefreshCw, RotateCcw,
+} from "lucide-react";
 import { RunStatusPill } from "./shared/RunStatusPill";
 import { HashPill } from "./shared/HashPill";
 import { RunDetailBanner } from "./RunDetailBanner";
 import type { ModalKind } from "./RunActionModal";
 import type { RunDetail, RunDetailStatus } from "@/lib/runs-types";
+import { useApiSession } from "@/hooks/use-api-session";
+import {
+  downloadRunArtifactFile,
+  downloadRunWorkbooksBundle,
+  type OutputArtifactKind,
+} from "@/lib/api/runs";
 
 interface RunDetailHeaderProps {
   run: RunDetail;
   onOpenModal: (kind: NonNullable<ModalKind>) => void;
+}
+
+const DOWNLOADS: { kind: OutputArtifactKind; label: string }[] = [
+  { kind: "PD_CALCS", label: "PD term structure (.xlsx)" },
+  { kind: "LGD", label: "LGD workbook (.xlsx)" },
+  { kind: "RUNDOWN", label: "Contractual rundown (.xlsx)" },
+  { kind: "ECL_SUMMARY", label: "ECL summary (.xlsx)" },
+];
+
+function DownloadMenu({ runFullId, style }: { runFullId: string; style: React.CSSProperties }) {
+  const { token, tenantId } = useApiSession();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState<OutputArtifactKind | "bundle" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  async function download(kind: OutputArtifactKind | "bundle") {
+    if (!token || !tenantId) return;
+    setOpen(false);
+    setError(null);
+    setBusy(kind);
+    try {
+      if (kind === "bundle") await downloadRunWorkbooksBundle(token, tenantId, runFullId);
+      else await downloadRunArtifactFile(token, tenantId, runFullId, kind);
+    } catch {
+      setError("Download failed. Try again in a moment.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const icon = (kind: OutputArtifactKind | "bundle") =>
+    busy === kind ? (
+      <Loader2 size={14} className="mp-ic" aria-hidden style={{ animation: "spin 0.7s linear infinite" }} />
+    ) : (
+      <Download size={14} className="mp-ic" aria-hidden />
+    );
+
+  return (
+    <div className="fdrop" ref={ref}>
+      <button
+        style={style}
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={busy !== null}
+      >
+        {busy ? <Loader2 size={14} style={{ animation: "spin 0.7s linear infinite" }} /> : <Download size={14} />}
+        Download
+        <ChevronDown size={13} aria-hidden />
+      </button>
+      {open && (
+        <div className="menu-pop" role="menu">
+          {DOWNLOADS.map(({ kind, label }) => (
+            <button key={kind} className="mp-item" role="menuitem" onClick={() => download(kind)}>
+              {icon(kind)}
+              {label}
+            </button>
+          ))}
+          <div className="mp-sep" role="separator" />
+          <button className="mp-item" role="menuitem" onClick={() => download("bundle")}>
+            {icon("bundle")}
+            All workbooks (.zip)
+          </button>
+        </div>
+      )}
+      {error && (
+        <div
+          role="alert"
+          style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, whiteSpace: "nowrap", fontSize: "var(--fs-caption)", color: "var(--danger)" }}
+        >
+          {error}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ActionButtons({
@@ -64,10 +157,7 @@ function ActionButtons({
   if (status === "success") {
     return (
       <>
-        <button style={{ ...btnBase, background: "var(--surface)", color: "var(--text)" }}>
-          <Download size={14} />
-          Download
-        </button>
+        <DownloadMenu runFullId={runFullId} style={{ ...btnBase, background: "var(--surface)", color: "var(--text)" }} />
         <Link
           href={`/results?run_id=${encodeURIComponent(runFullId)}`}
           style={{
