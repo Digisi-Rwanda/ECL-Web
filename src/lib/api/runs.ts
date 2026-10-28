@@ -375,6 +375,21 @@ export async function downloadRunArtifactFile(
   );
 }
 
+/** PD Calcs.xlsx built from the PD upload alone — available before LGD/EAD. */
+export async function downloadPdExport(token: string, tenantId: string, runId: string): Promise<void> {
+  const res = await fetch(buildApiPath(`/tenants/${tenantId}/runs/${runId}/pd/export`), {
+    headers: { Authorization: `Bearer ${token}` },
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError("DOWNLOAD_FAILED", "PD workbook download failed.", res.status);
+  }
+  triggerBlobDownload(
+    await res.blob(),
+    filenameFromContentDisposition(res.headers.get("Content-Disposition"), "PD Calcs.xlsx"),
+  );
+}
+
 export async function downloadRunWorkbooksBundle(
   token: string,
   tenantId: string,
