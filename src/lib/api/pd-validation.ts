@@ -69,6 +69,10 @@ export interface PdSegmentPreviewRaw {
   amounts?: string[][];
   dest_labels?: string[];
   destLabels?: string[];
+  proportions?: number[][];
+  observed_3?: string[][];
+  normalized?: number[][];
+  term_structure?: number[][][];
   stats: {
     cure_rate?: number;
     cureRate?: number;
@@ -186,6 +190,10 @@ export function mapPdSegmentPreview(raw: PdSegmentPreviewRaw): PdSegmentPreview 
     matrix: raw.matrix,
     amounts: raw.amounts,
     destLabels: raw.destLabels ?? raw.dest_labels,
+    proportions: raw.proportions,
+    observed3: raw.observed_3,
+    normalized: raw.normalized,
+    termStructure: raw.term_structure,
     stats: {
       cureRate: raw.stats.cureRate ?? raw.stats.cure_rate ?? 0,
       loansObserved: raw.stats.loansObserved ?? raw.stats.loans_observed ?? 0,

@@ -105,6 +105,14 @@ export interface PdSegmentPreview {
   amounts?: string[][];
   destLabels?: string[];
   stats: PdPreviewStats;
+  /** Spec Step 1: 3×3 shares with Offbooks dropped (rows sum to 1). */
+  proportions?: number[][];
+  /** Step 1 input balances (3×3), server-formatted. */
+  observed3?: string[][];
+  /** Spec Step 3: Stage 1 = [A11, A12+A13, 0], Stage 3 absorbing. */
+  normalized?: number[][];
+  /** Steps 4–7: [transition][month-1] = [Stage 1, Stage 2, Stage 3, Marginal PD]. */
+  termStructure?: number[][][];
 }
 
 export interface PdPreviewResult {
