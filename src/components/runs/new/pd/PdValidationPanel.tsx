@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Hash, Info, Search } from "lucide-react";
-import { PdObservedMatrixCard } from "@/components/pd/PdObservedMatrixCard";
+import { PdTermStructureCard } from "@/components/pd/PdTermStructureCard";
+import { useApiSession } from "@/hooks/use-api-session";
+import { downloadPdExport } from "@/lib/api/runs";
+import { useRunWizard } from "../RunWizardContext";
 import { CriteriaGroup } from "./CriteriaGroup";
 import { CriteriaRow } from "./CriteriaRow";
 import { PdLoanPreviewTable, PD_LOAN_PAGE_SIZE } from "./PdLoanPreviewTable";
@@ -28,6 +31,8 @@ function sortRows(
 }
 
 export function PdValidationPanel({ preview }: PdValidationPanelProps) {
+  const { token, tenantId } = useApiSession();
+  const runId = useRunWizard().state.runId;
   const structural = preview.criteria.filter((c) => c.category === "structural");
   const business = preview.criteria.filter((c) => c.category === "business");
   const info = preview.criteria.find((c) => c.category === "info");
@@ -227,20 +232,17 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
       ) : null}
 
       {preview.loans.length > 0 && activePreview && (
-        <div className="rx-panel" style={{ marginTop: "var(--sp-4)" }}>
-          <div className="rx-panel-head">
-            <h3>PD transition matrix</h3>
-            <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
-              {periodLabel ? `${periodLabel} · ` : ""}
-              {activePreview.segment} · observed transitions
-            </span>
-          </div>
-          <div className="rx-panel-body">
-            <PdObservedMatrixCard
-              segment={activePreview}
-              caption="Observed P(row → col) next month — stored at compute and reused in Results."
-            />
-          </div>
+        <div style={{ marginTop: "var(--sp-4)" }}>
+          <PdTermStructureCard
+            key={activePreview.segment}
+            segment={activePreview}
+            periodLabel={periodLabel ?? undefined}
+            onDownload={
+              token && tenantId && runId && !preview.isMock
+                ? () => downloadPdExport(token, tenantId, runId)
+                : undefined
+            }
+          />
         </div>
       )}
 
