@@ -20,13 +20,11 @@ const STEPS = [
   { id: "normalize", label: "3 · Normalize" },
   { id: "powers", label: "4 · Powers" },
   { id: "dataset", label: "5–6 · Dataset" },
-  { id: "marginal", label: "7 · Marginal PD" },
-  { id: "final", label: "Final output" },
+  { id: "final", label: "7 · Final output" },
 ] as const;
 type StepId = (typeof STEPS)[number]["id"];
 
 const pct = (v: number, digits = 4) => `${(v * 100).toFixed(digits)}%`;
-const dec = (v: number) => v.toFixed(6);
 
 interface Row {
   month: number;
@@ -47,16 +45,6 @@ function buildRows(term: number[][][], sorted: boolean): Row[] {
   if (sorted) for (let t = 0; t < 3; t++) for (let m = 0; m < MONTHS; m++) push(t, m);
   else for (let m = 0; m < MONTHS; m++) for (let t = 0; t < 3; t++) push(t, m);
   return rows;
-}
-
-function marginalRule(term: number[][][], row: Row): { rule: string; formula: string } {
-  if (row.month === 1) return { rule: "First month", formula: `= Stage 3 = ${dec(row.s3)}` };
-  const prev = term[row.transition][row.month - 2][2];
-  if (1 - prev <= 1e-15) return { rule: "Denominator 0", formula: "1 − prev = 0 → 0" };
-  return {
-    rule: "Hazard",
-    formula: `(${dec(row.s3)} − ${dec(prev)}) / (1 − ${dec(prev)})`,
-  };
 }
 
 function CumulativeChart({ term }: { term: number[][][] }) {
@@ -105,12 +93,11 @@ function CumulativeChart({ term }: { term: number[][][] }) {
 interface TableProps {
   rows: Row[];
   segment: string;
-  term: number[][][];
-  columns: "dataset" | "marginal" | "final";
+  columns: "dataset" | "final";
   cureRate: number;
 }
 
-function TermTable({ rows, segment, term, columns, cureRate }: TableProps) {
+function TermTable({ rows, segment, columns, cureRate }: TableProps) {
   const [page, setPage] = useState(1);
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const safe = Math.min(page, pages);
@@ -128,13 +115,11 @@ function TermTable({ rows, segment, term, columns, cureRate }: TableProps) {
               <th className="num">Stage 2</th>
               <th className="num">Stage 3</th>
               {columns !== "dataset" && <th className="num">Marginal PD</th>}
-              {columns === "marginal" && <th>How</th>}
               {columns === "final" && <th className="num">Cure Rate</th>}
             </tr>
           </thead>
           <tbody>
             {slice.map((r) => {
-              const how = columns === "marginal" ? marginalRule(term, r) : null;
               return (
                 <tr key={`${r.transition}-${r.month}`} data-first={r.month === 1 || undefined}>
                   <td>{segment}</td>
@@ -144,12 +129,6 @@ function TermTable({ rows, segment, term, columns, cureRate }: TableProps) {
                   <td className="num">{pct(r.s2)}</td>
                   <td className="num">{pct(r.s3)}</td>
                   {columns !== "dataset" && <td className="num pdts-strong">{pct(r.marginal)}</td>}
-                  {how && (
-                    <td className="pdts-how">
-                      <span className="pdts-rule">{how.rule}</span>
-                      <code>{how.formula}</code>
-                    </td>
-                  )}
                   {columns === "final" && <td className="num">{pct(cureRate, 3)}</td>}
                 </tr>
               );
@@ -366,19 +345,7 @@ export function PdTermStructureCard({ segment, periodLabel, onDownload }: PdTerm
                 Sorted (Step 6)
               </button>
             </div>
-            <TermTable key={String(sortedView)} rows={rows} segment={segment.segment} term={term} columns="dataset" cureRate={cure} />
-          </>
-        )}
-
-        {step === "marginal" && term && (
-          <>
-            <p className="pdts-lead">
-              <b>Step 7.</b> First month of each Transition: Marginal PD = Stage 3. After that:{" "}
-              <code>(S3ₙ − S3ₙ₋₁) / (1 − S3ₙ₋₁)</code>; if the denominator is 0, Marginal PD = 0. This is the PD
-              used in ECL: Credit loss = EAD × Marginal PD × LGD.
-            </p>
-            <TransitionFilter value={transition} onChange={setTransition} />
-            <TermTable key={`m-${transition}`} rows={filtered} segment={segment.segment} term={term} columns="marginal" cureRate={cure} />
+            <TermTable key={String(sortedView)} rows={rows} segment={segment.segment} columns="dataset" cureRate={cure} />
           </>
         )}
 
@@ -386,7 +353,9 @@ export function PdTermStructureCard({ segment, periodLabel, onDownload }: PdTerm
           <>
             <div className="between pdts-final-head">
               <p className="pdts-lead" style={{ margin: 0 }}>
-                Final dataset — exactly what the ECL joins on (Segment, Month, Transition).
+                <b>Step 7.</b> Marginal PD: first month of each Transition = Stage 3, then{" "}
+                <code>(S3ₙ − S3ₙ₋₁) / (1 − S3ₙ₋₁)</code> (0 if the denominator is 0). This final dataset is
+                exactly what the ECL joins on (Segment, Month, Transition): Credit loss = EAD × Marginal PD × LGD.
               </p>
               {onDownload && (
                 <button type="button" className="btn btn-primary btn-sm" onClick={handleDownload} disabled={downloading}>
@@ -401,7 +370,7 @@ export function PdTermStructureCard({ segment, periodLabel, onDownload }: PdTerm
               </p>
             )}
             <TransitionFilter value={transition} onChange={setTransition} />
-            <TermTable key={`f-${transition}`} rows={filtered} segment={segment.segment} term={term} columns="final" cureRate={cure} />
+            <TermTable key={`f-${transition}`} rows={filtered} segment={segment.segment} columns="final" cureRate={cure} />
           </>
         )}
       </div>
