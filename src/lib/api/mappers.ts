@@ -48,8 +48,6 @@ import type {
   RunInputFileRaw,
   AuditEventRaw,
   EngineProgressRaw,
-  ValidationResultRaw,
-  ValidationIssueRaw,
 } from "@/lib/api/runs";
 import type {
   SegmentDataRaw,
@@ -648,83 +646,6 @@ export function mapEngineProgress(raw: EngineProgressRaw | null | undefined): Co
     return { id, title, description, status, elapsed, durationMs };
   });
 }
-
-export function mapValidationResult(
-  raw: ValidationResultRaw,
-  uploadedFiles: Array<{
-    id: string;
-    name: string;
-    type: "PD" | "LGD" | "EAD";
-    size: string;
-    sheets: number;
-    hash: string;
-    status: import("@/lib/new-run-types").FileStatus;
-    backendUploadId?: string;
-  }>,
-): import("@/lib/new-run-types").ValidationResult {
-  const blockingCount =
-    raw.blocking_count ??
-    raw.issues.filter((issue) => issue.level === "block").length;
-  const warningCount =
-    raw.warning_count ??
-    raw.issues.filter((issue) => issue.level === "warn").length;
-
-  const fileResults = uploadedFiles.map((f) => {
-    const fileIssues = raw.issues
-      .filter(
-        (issue) =>
-          issue.upload_id != null
-            ? issue.upload_id === f.backendUploadId
-            : !issue.kind || issue.kind === f.type,
-      )
-      .map((issue: ValidationIssueRaw) => ({
-        id: issue.id,
-        level: issue.level === "block" ? ("block" as const) : ("warn" as const),
-        title: issue.title,
-        location: issue.location ?? "—",
-        fix: issue.fix ?? "",
-        category: issue.category ?? null,
-      }));
-    return {
-      file: f,
-      issues: fileIssues,
-    };
-  });
-
-  const hasTemplateFormatIssues = raw.issues.some(
-    (issue) => issue.category === "template_format",
-  );
-
-  const summary =
-    raw.summary ??
-    (raw.status === "ok"
-      ? "All checks passed"
-      : raw.status === "blocking"
-        ? "Validation errors found"
-        : "Validation warnings found");
-
-  const detected = raw.detected_segments ?? [];
-  const subSummary =
-    raw.sub_summary ??
-    (raw.status === "ok"
-      ? `${detected.length} segment(s) detected · files are ready for computation`
-      : raw.status === "blocking"
-        ? `${blockingCount} blocking error(s) must be fixed before continuing`
-        : `${warningCount} warning(s) to review`);
-
-  return {
-    status: raw.status,
-    summary,
-    subSummary,
-    fileResults,
-    detectedSegments: detected,
-    blockingCount,
-    warningCount,
-    hasTemplateFormatIssues,
-  };
-}
-
-// ── Results mappers ───────────────────────────────────────────────────────
 
 export function mapSegmentData(raw: SegmentDataRaw): SegmentData {
   const mix = raw.mix ?? [raw.stage1_pct ?? 0, raw.stage2_pct ?? 0, raw.stage3_pct ?? 0];

@@ -6,7 +6,7 @@
  * workbook was evaluated — including when it blocks. A 4xx means there was
  * nothing to evaluate (no PD file, unreadable workbook, missing run).
  *
- * Timeout: same 180s as validateRun().
+ * Timeout: 180s, like the LGD and EAD steps.
  */
 
 import { apiFetch, ApiError } from "@/lib/api/client";

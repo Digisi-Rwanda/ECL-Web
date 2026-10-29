@@ -9,11 +9,14 @@ export function ConfirmStep() {
   const { state, dispatch } = useRunWizard();
   const { token, tenantId, tenantName, currency } = useApiSession();
 
-  function handleToggleCombine(value: boolean) {
+  async function handleToggleCombine(value: boolean) {
     dispatch({ type: "SET_COMBINE_PD", value });
     if (state.runId && token && tenantId) {
-      updateRun(token, tenantId, state.runId, { combine_pd_files: value }).catch(() => {});
+      await updateRun(token, tenantId, state.runId, { combine_pd_files: value }).catch(() => {});
     }
+    // The PD curve feeds LGD/EAD validation, so both must run again on the new curve.
+    dispatch({ type: "RESET_VALIDATION_FROM", kind: "LGD" });
+    dispatch({ type: "GO_TO_STEP", step: "validate" });
   }
 
   return (
@@ -26,7 +29,7 @@ export function ConfirmStep() {
         state={state}
         tenantName={tenantName ?? undefined}
         currency={currency}
-        onToggleCombine={handleToggleCombine}
+        onToggleCombine={(v) => void handleToggleCombine(v)}
       />
     </div>
   );

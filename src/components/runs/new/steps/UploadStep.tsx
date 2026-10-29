@@ -273,7 +273,7 @@ export function UploadStep() {
             {state.uploadFocus === "LGD"
               ? "Your PD file and its validation stay on this run. Upload Loss Given Default here, then continue to validation."
               : state.uploadFocus === "EAD"
-              ? "PD and LGD stay on this run. Upload Exposure at Default here, then continue to validation — LGD and EAD will be checked together."
+              ? "PD and LGD stay on this run. Upload Exposure at Default here, then continue to validation — EAD is validated last and previews the final ECL."
               : "Drop the file for this zone. Files already on this run are kept."}
           </span>
         </div>
@@ -295,7 +295,7 @@ export function UploadStep() {
         <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 14, alignItems: "flex-start" }}>
           <div>
             <h2>Upload your monthly files</h2>
-            <p className="rc-sub">Upload in order: Probability of Default, then Loss Given Default, then Exposure at Default. PD validates on its own — LGD and EAD are checked together once both are on the run. Files already uploaded stay on this run when you move between steps.</p>
+            <p className="rc-sub">Upload in order: Probability of Default, then Loss Given Default, then Exposure at Default. Each file is validated in that order, one step at a time; the EAD step previews the final ECL. Files already uploaded stay on this run when you move between steps.</p>
           </div>
           {/* Run name input */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 200 }}>

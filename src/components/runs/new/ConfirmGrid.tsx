@@ -1,7 +1,7 @@
 import { Lock } from "lucide-react";
 import { FileHashPill } from "./shared/FileHashPill";
+import { fmtInt, fmtMoney, fmtPct } from "@/components/ecl/format";
 import { SegmentTag } from "./shared/SegmentTag";
-import { DETECTED_SEGMENTS } from "@/lib/new-run-types";
 import type { NewRunState } from "@/lib/new-run-types";
 
 interface ConfirmGridProps {
@@ -13,11 +13,9 @@ interface ConfirmGridProps {
 
 export function ConfirmGrid({ state, tenantName = "Workspace", currency = "USD", onToggleCombine }: ConfirmGridProps) {
   const showCombine = state.pdFiles.length > 1;
-  const segments =
-    state.validationResult?.detectedSegments &&
-    state.validationResult.detectedSegments.length > 0
-      ? state.validationResult.detectedSegments
-      : DETECTED_SEGMENTS;
+  const preview = state.eadValidation?.preview;
+  const segments = preview?.segmentSummary.map((s) => s.key).filter((k) => k !== "Total") ?? [];
+  const recon = preview?.reconciliation ?? [];
 
   return (
     <div>
@@ -64,13 +62,37 @@ export function ConfirmGrid({ state, tenantName = "Workspace", currency = "USD",
             </div>
           </span>
         </div>
+        {preview && (
+          <>
+            <div className="confirm-row">
+              <span className="cr-k">Reporting Date</span>
+              <span className="cr-v">
+                {preview.reportingDate ?? "—"} {preview.reportingDateSource === "file" ? "(most common date in the EAD file)" : "(set on the run)"}
+              </span>
+            </div>
+            <div className="confirm-row">
+              <span className="cr-k">Validated ECL</span>
+              <span className="cr-v">
+                <b>{fmtMoney(preview.totals.ecl)}</b> on {fmtMoney(preview.totals.outstanding)} outstanding (
+                {fmtPct(preview.totals.coverage)}) · {fmtInt(preview.totals.loans)} loans ·{" "}
+                {fmtInt(preview.totals.excludedRows)} excluded · {fmtInt(preview.totals.cappedLoans)} capped
+              </span>
+            </div>
+            <div className="confirm-row">
+              <span className="cr-k">Reconciliation</span>
+              <span className="cr-v">
+                {recon.filter((c) => c.passed).length} of {recon.length} checks pass
+              </span>
+            </div>
+          </>
+        )}
         <div className="confirm-row">
           <span className="cr-k">Engine version</span>
           <span className="cr-v">
             <span style={{ fontFamily: "var(--font-mono)", fontWeight: "var(--fw-medium)" as React.CSSProperties["fontWeight"] }}>
-              v1.0.3
+              {state.eadValidation?.engineVersion ?? "—"}
             </span>
-            {" · "}299 monthly powers
+            {" · "}ECL Calculation Specification v1.0
           </span>
         </div>
       </div>

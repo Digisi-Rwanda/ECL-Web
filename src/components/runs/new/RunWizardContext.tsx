@@ -3,6 +3,8 @@
 import { createContext, useContext, useReducer, type Dispatch } from "react";
 import {
   DEFAULT_COMPUTE_STAGES,
+  type EclStepStatus,
+  type FileInputType,
   type NewRunState,
   type NewRunAction,
   type UploadedFile,
@@ -20,8 +22,6 @@ const initialState: NewRunState = {
   lgdFile: null,
   eadFile: null,
   combinePdFiles: true,
-  validationResult: null,
-  isValidating: false,
   pdPreview: null,
   pdPreviewStatus: "idle",
   pdPreviewError: null,
@@ -32,9 +32,40 @@ const initialState: NewRunState = {
   cancelModalOpen: false,
   uploadProgress: {},
   uploadedFileIds: {},
-  acceptedWarningIds: [],
   uploadFocus: null,
+  lgdValidation: null,
+  lgdStatus: "idle",
+  lgdError: null,
+  eadValidation: null,
+  eadStatus: "idle",
+  eadError: null,
+  reviewAccepted: { PD: false, LGD: false, EAD: false },
 };
+
+const ORDER: FileInputType[] = ["PD", "LGD", "EAD"];
+
+/** A changed file invalidates its own validation and every later step's (mirrors the server). */
+function resetFrom(state: NewRunState, kind: FileInputType): NewRunState {
+  const from = ORDER.indexOf(kind);
+  const hit = (k: FileInputType) => ORDER.indexOf(k) >= from;
+  return {
+    ...state,
+    ...(hit("PD") ? { pdPreview: null, pdPreviewStatus: "idle" as const, pdPreviewError: null } : {}),
+    ...(hit("LGD") ? { lgdValidation: null, lgdStatus: "idle" as const, lgdError: null } : {}),
+    eadValidation: null,
+    eadStatus: "idle",
+    eadError: null,
+    reviewAccepted: {
+      PD: hit("PD") ? false : state.reviewAccepted.PD,
+      LGD: hit("LGD") ? false : state.reviewAccepted.LGD,
+      EAD: false,
+    },
+  };
+}
+
+function stepStatus(status: "ok" | "warn" | "blocking"): EclStepStatus {
+  return status === "blocking" ? "blocked" : "ready";
+}
 
 // ── Reducer ────────────────────────────────────────────────────────────────
 
@@ -44,44 +75,46 @@ function reducer(state: NewRunState, action: NewRunAction): NewRunState {
       return { ...state, runName: action.name };
 
     case "ADD_PD_FILE":
-      return {
-        ...state,
-        pdFiles: [...state.pdFiles, action.file],
-        pdPreview: null,
-        pdPreviewStatus: "idle",
-        pdPreviewError: null,
-        validationResult: null,
-        isValidating: false,
-      };
+      return { ...resetFrom(state, "PD"), pdFiles: [...state.pdFiles, action.file] };
 
     case "REMOVE_PD_FILE":
-      return {
-        ...state,
-        pdFiles: state.pdFiles.filter((f) => f.id !== action.id),
-        pdPreview: null,
-        pdPreviewStatus: "idle",
-        pdPreviewError: null,
-        validationResult: null,
-        isValidating: false,
-      };
+      return { ...resetFrom(state, "PD"), pdFiles: state.pdFiles.filter((f) => f.id !== action.id) };
 
     case "SET_LGD_FILE":
       return {
-        ...state,
+        ...resetFrom(state, "LGD"),
         lgdFile: action.file,
-        validationResult: null,
-        isValidating: false,
         uploadFocus: action.file ? null : state.uploadFocus,
       };
 
     case "SET_EAD_FILE":
       return {
-        ...state,
+        ...resetFrom(state, "EAD"),
         eadFile: action.file,
-        validationResult: null,
-        isValidating: false,
         uploadFocus: action.file ? null : state.uploadFocus,
       };
+
+    case "START_STEP_VALIDATING":
+      return action.kind === "LGD"
+        ? { ...state, lgdValidation: null, lgdStatus: "loading", lgdError: null }
+        : { ...state, eadValidation: null, eadStatus: "loading", eadError: null };
+
+    case "SET_LGD_VALIDATION":
+      return { ...state, lgdValidation: action.result, lgdStatus: stepStatus(action.result.status), lgdError: null };
+
+    case "SET_EAD_VALIDATION":
+      return { ...state, eadValidation: action.result, eadStatus: stepStatus(action.result.status), eadError: null };
+
+    case "SET_STEP_ERROR":
+      return action.kind === "LGD"
+        ? { ...state, lgdValidation: null, lgdStatus: "error", lgdError: action.error }
+        : { ...state, eadValidation: null, eadStatus: "error", eadError: action.error };
+
+    case "RESET_VALIDATION_FROM":
+      return resetFrom(state, action.kind);
+
+    case "SET_REVIEW_ACCEPTED":
+      return { ...state, reviewAccepted: { ...state.reviewAccepted, [action.kind]: action.value } };
 
     case "SET_COMBINE_PD":
       return { ...state, combinePdFiles: action.value };
@@ -93,12 +126,6 @@ function reducer(state: NewRunState, action: NewRunAction): NewRunState {
         step: action.step,
         uploadFocus: action.step === "upload" ? state.uploadFocus : null,
       };
-
-    case "START_VALIDATING":
-      return { ...state, isValidating: true, validationResult: null };
-
-    case "SET_VALIDATION_RESULT":
-      return { ...state, isValidating: false, validationResult: action.result };
 
     case "SET_COMPUTE_PROGRESS":
       return { ...state, computeProgress: action.pct };
@@ -151,14 +178,8 @@ function reducer(state: NewRunState, action: NewRunAction): NewRunState {
       };
     }
 
-    case "SET_ACCEPTED_WARNING_IDS":
-      return { ...state, acceptedWarningIds: action.ids };
-
-    case "CLEAR_VALIDATION_RESULT":
-      return { ...state, validationResult: null, isValidating: false };
-
     case "START_PD_VALIDATING":
-      return { ...state, pdPreview: null, pdPreviewStatus: "loading", pdPreviewError: null };
+      return { ...state, pdPreview: null, pdPreviewStatus: "loading", pdPreviewError: null, reviewAccepted: { ...state.reviewAccepted, PD: false } };
 
     case "SET_PD_PREVIEW":
       return {
@@ -236,14 +257,6 @@ export function pdFilesReady(state: NewRunState): boolean {
   return state.pdFiles.some((f) => fileIsReady(f));
 }
 
-export function hasLgdAndEad(state: NewRunState): boolean {
-  return fileIsReady(state.lgdFile) && fileIsReady(state.eadFile);
-}
-
-export function isUploadReady(state: NewRunState): boolean {
-  return pdFilesReady(state) && hasLgdAndEad(state);
-}
-
 export function nextMissingPairFile(state: NewRunState): "LGD" | "EAD" | null {
   if (!fileIsReady(state.lgdFile)) return "LGD";
   if (!fileIsReady(state.eadFile)) return "EAD";
@@ -252,72 +265,54 @@ export function nextMissingPairFile(state: NewRunState): "LGD" | "EAD" | null {
 
 export function canReturnToValidate(state: NewRunState): boolean {
   if (!pdFilesReady(state)) return false;
-  return (
-    state.prevStep === "validate" ||
-    state.pdPreviewStatus === "ready" ||
-    state.pdPreviewStatus === "blocked" ||
-    state.pdPreviewStatus === "loading"
-  );
+  return state.prevStep === "validate" || state.pdPreviewStatus !== "idle";
+}
+
+/** One component's gate: validated, nothing blocking, review items accepted. */
+export function stepCleared(
+  status: "ok" | "warn" | "blocking" | undefined,
+  accepted: boolean,
+): boolean {
+  return status === "ok" || (status === "warn" && accepted);
+}
+
+export function pdCleared(state: NewRunState): boolean {
+  return state.pdPreviewStatus === "ready" && stepCleared(state.pdPreview?.status, state.reviewAccepted.PD);
+}
+
+export function lgdCleared(state: NewRunState): boolean {
+  return state.lgdStatus === "ready" && stepCleared(state.lgdValidation?.status, state.reviewAccepted.LGD);
+}
+
+export function eadCleared(state: NewRunState): boolean {
+  return state.eadStatus === "ready" && stepCleared(state.eadValidation?.status, state.reviewAccepted.EAD);
 }
 
 export function canContinueFrom(state: NewRunState): boolean {
-  // PD validates on its own. The upload footer can advance once a PD file is ready;
-  // confirm still waits for LGD + EAD and their joint validation.
   if (state.step === "upload") return pdFilesReady(state);
-  if (state.step === "validate") {
-    if (state.pdPreviewStatus === "loading" || state.pdPreviewStatus === "blocked" || state.pdPreviewStatus === "error") {
-      return false;
-    }
-    if (pdFilesReady(state) && state.pdPreviewStatus !== "ready") return false;
-    if (!hasLgdAndEad(state)) return false;
-    if (state.isValidating) return false;
-    if (!state.validationResult) return false;
-    if (state.validationResult.requestError) return false;
-    if (state.validationResult.status === "blocking") return false;
-    if (state.validationResult.status === "warn") {
-      const warningIds = state.validationResult.fileResults.flatMap((fr) =>
-        fr.issues.filter((i) => i.level === "warn").map((i) => i.id),
-      );
-      if (warningIds.length === 0) return true;
-      return warningIds.every((id) => state.acceptedWarningIds.includes(id));
-    }
-    return true;
-  }
+  if (state.step === "validate") return pdCleared(state) && lgdCleared(state) && eadCleared(state);
   return true;
 }
 
 export function getFooterHint(state: NewRunState): string {
   if (state.step === "upload") {
-    if (!pdFilesReady(state)) return "Upload a PD workbook first";
-    return "Add all three file types first";
+    return pdFilesReady(state) ? "Continue to validate PD" : "Upload a PD workbook first";
   }
   if (state.step === "validate") {
-    const missing = nextMissingPairFile(state);
-    if (missing === "LGD") return "Upload LGD to continue";
-    if (missing === "EAD") return "Upload EAD to continue";
-    if (!hasLgdAndEad(state)) return "Upload LGD and EAD to continue";
-    if (state.pdPreviewStatus === "blocked") {
-      return "Fix the errors in your files before continuing";
+    const steps: [string, NewRunState["pdPreviewStatus"], boolean, boolean][] = [
+      ["PD", state.pdPreviewStatus, pdCleared(state), !!state.pdFiles.length],
+      ["LGD", state.lgdStatus, lgdCleared(state), !!state.lgdFile],
+      ["EAD", state.eadStatus, eadCleared(state), !!state.eadFile],
+    ];
+    for (const [kind, status, cleared, uploaded] of steps) {
+      if (cleared) continue;
+      if (!uploaded) return `Upload ${kind} to continue`;
+      if (status === "loading") return `Validating ${kind}…`;
+      if (status === "blocked") return `Fix the blocking ${kind} checks and re-upload`;
+      if (status === "error") return `Retry ${kind} validation`;
+      if (status === "ready") return `Review and accept the ${kind} review items`;
+      return `Validate ${kind} to continue`;
     }
-    if (state.pdPreviewStatus === "error") {
-      return "Resolve the issue above, then retry";
-    }
-    if (state.validationResult?.requestError?.isServiceUnavailable) {
-      return "Service unavailable — retry validation";
-    }
-    if (state.validationResult?.requestError) {
-      return "Resolve the issue above, then retry";
-    }
-    if (state.validationResult?.status === "warn") {
-      const warningIds = state.validationResult.fileResults.flatMap((fr) =>
-        fr.issues.filter((i) => i.level === "warn").map((i) => i.id),
-      );
-      const allAccepted = warningIds.every((id) => state.acceptedWarningIds.includes(id));
-      if (!allAccepted) {
-        return "Review and accept warnings to continue";
-      }
-    }
-    return "Fix the errors in your files before continuing";
   }
   return "Complete this step to continue";
 }

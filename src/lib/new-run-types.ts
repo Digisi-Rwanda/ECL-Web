@@ -48,22 +48,6 @@ export interface ValidationFileResult {
   issues: ValidationIssue[];
 }
 
-export interface ValidationResult {
-  status: "ok" | "warn" | "blocking";
-  summary: string;
-  subSummary: string;
-  fileResults: ValidationFileResult[];
-  detectedSegments?: string[];
-  blockingCount?: number;
-  warningCount?: number;
-  requestError?: {
-    code?: string;
-    status?: number;
-    hint: string;
-    isServiceUnavailable?: boolean;
-  };
-  hasTemplateFormatIssues?: boolean;
-}
 
 // ── PD-first preview (validate-time, before LGD/EAD) ───────────────────────
 
@@ -125,6 +109,139 @@ export interface PdPreviewResult {
   issues?: ValidationIssue[];
 }
 
+// ── LGD / EAD validation and ECL report (spec v1.0) ───────────────────────
+
+export type EclStepStatus = "idle" | "loading" | "ready" | "blocked" | "error";
+
+export interface EclException {
+  category: string;
+  dataset: string;
+  loanId: string;
+  customerId: string;
+  field: string;
+  value: string;
+  issue: string;
+  action: string;
+}
+
+export interface ReconciliationCheck {
+  name: string;
+  expected: number;
+  actual: number;
+  difference: number;
+  passed: boolean;
+  detail: string;
+}
+
+export interface SummaryRow {
+  key: string;
+  outstanding: number;
+  ecl: number;
+  /** Fraction. */
+  coverage: number;
+}
+
+export interface EclTotals {
+  outstanding: number;
+  ecl: number;
+  eclBeforeCap: number;
+  coverage: number;
+  loans: number;
+  excludedRows: number;
+  cappedLoans: number;
+}
+
+export interface CollateralParameter {
+  name: string;
+  haircut: number | null;
+  years: number | null;
+  valid: boolean;
+}
+
+export interface LgdLoan {
+  loanId: string;
+  customerId: string;
+  outstanding: number;
+  totalCustomerExposure: number;
+  proportion: number;
+  collateralEir: number;
+  /** Per type: [customer value, allocated, discounted]. */
+  collateral: Record<string, [number, number, number]>;
+  discountedCollateral: number;
+}
+
+export interface LgdPreview {
+  provisional: boolean;
+  parameters: CollateralParameter[];
+  loans: LgdLoan[];
+  loanCount: number;
+  exceptions: EclException[];
+  exceptionCount: number;
+}
+
+export interface LgdValidationResult {
+  status: "ok" | "warn" | "blocking";
+  criteria: PdCriterion[];
+  preview: LgdPreview | null;
+  engineVersion: string;
+}
+
+export interface EadLoan {
+  loanId: string;
+  customerId: string;
+  segment: string;
+  stage: string;
+  treatment: string;
+  outstanding: number;
+  discountedCollateral: number;
+  rows: number;
+  eclBeforeCap: number;
+  totalEcl: number;
+  capped: boolean;
+}
+
+export interface EadPreview {
+  reportingDate: string | null;
+  reportingDateSource: "run" | "file";
+  loans: EadLoan[];
+  loanCount: number;
+  rows: { columns: string[]; data: (number | string | null)[][] };
+  rowLoanCount: number;
+  totals: EclTotals;
+  stageSummary: SummaryRow[];
+  segmentSummary: SummaryRow[];
+  reconciliation: ReconciliationCheck[];
+  exceptions: EclException[];
+  exceptionCounts: Record<string, number>;
+  excluded: { loanId: string; customerId: string; outstanding: number | null; reason: string }[];
+}
+
+export interface EadValidationResult {
+  status: "ok" | "warn" | "blocking";
+  criteria: PdCriterion[];
+  preview: EadPreview | null;
+  engineVersion: string;
+}
+
+export interface EclReport {
+  runId: string;
+  reportingDate: string | null;
+  specVersion: string;
+  engineVersion: string;
+  totals: EclTotals;
+  stageSummary: SummaryRow[];
+  segmentSummary: SummaryRow[];
+  reconciliation: ReconciliationCheck[];
+  exceptionCounts: Record<string, number>;
+}
+
+export interface ExceptionsPage {
+  items: EclException[];
+  total: number;
+  page: number;
+  perPage: number;
+}
+
 // ── Compute ────────────────────────────────────────────────────────────────
 
 export type ComputeStageStatus = "pending" | "active" | "done" | "error";
@@ -140,9 +257,9 @@ export interface ComputeStage {
 
 export const DEFAULT_COMPUTE_STAGES: Omit<ComputeStage, "status">[] = [
   { id: "pd",  title: "PD engine",    description: "Transition matrices · 299 monthly powers", durationMs: 1600 },
-  { id: "lgd", title: "LGD engine",   description: "Discounting collateral · cure rates",       durationMs: 2000 },
-  { id: "ead", title: "EAD engine",   description: "Forward rundown · expected balances",        durationMs: 1600 },
-  { id: "ecl", title: "ECL assembly", description: "PD × LGD × EAD · discounting to today",    durationMs: 1200 },
+  { id: "lgd", title: "LGD engine",   description: "Input rules · discounted collateral",       durationMs: 2000 },
+  { id: "ead", title: "EAD engine",   description: "Snapshots · instalments · missed payments",  durationMs: 1600 },
+  { id: "ecl", title: "ECL assembly", description: "EAD × PD × LGD · cap · reconciliation",    durationMs: 1200 },
 ];
 
 // ── Result ────────────────────────────────────────────────────────────────
@@ -167,8 +284,6 @@ export interface NewRunState {
   lgdFile: UploadedFile | null;
   eadFile: UploadedFile | null;
   combinePdFiles: boolean;
-  validationResult: ValidationResult | null;
-  isValidating: boolean;
   pdPreview: PdPreviewResult | null;
   pdPreviewStatus: PdPreviewStatus;
   pdPreviewError: string | null;
@@ -179,9 +294,16 @@ export interface NewRunState {
   cancelModalOpen: boolean;
   uploadProgress: Record<string, number>;
   uploadedFileIds: Record<string, string>;
-  acceptedWarningIds: string[];
   /** When returning to Upload from Validate, scroll to and highlight this zone. */
   uploadFocus: FileInputType | null;
+  lgdValidation: LgdValidationResult | null;
+  lgdStatus: EclStepStatus;
+  lgdError: string | null;
+  eadValidation: EadValidationResult | null;
+  eadStatus: EclStepStatus;
+  eadError: string | null;
+  /** Review items accepted per component (server records it too). */
+  reviewAccepted: Record<FileInputType, boolean>;
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────
@@ -196,8 +318,6 @@ export type NewRunAction =
   | { type: "SET_EAD_FILE"; file: UploadedFile | null }
   | { type: "SET_COMBINE_PD"; value: boolean }
   | { type: "GO_TO_STEP"; step: NewRunStep }
-  | { type: "START_VALIDATING" }
-  | { type: "SET_VALIDATION_RESULT"; result: ValidationResult }
   | { type: "SET_COMPUTE_PROGRESS"; pct: number }
   | { type: "SET_COMPUTE_STAGES"; stages: ComputeStage[] }
   | { type: "SET_RESULT"; result: RunResult }
@@ -207,27 +327,15 @@ export type NewRunAction =
   | { type: "SET_UPLOAD_PROGRESS"; fileId: string; progress: number }
   | { type: "SET_UPLOADED_FILE_ID"; fileId: string; serverId: string }
   | { type: "UPDATE_FILE_STATUS"; id: string; status: FileStatus; hash?: string; sheets?: number; errorMessage?: string; backendUploadId?: string }
-  | { type: "SET_ACCEPTED_WARNING_IDS"; ids: string[] }
-  | { type: "CLEAR_VALIDATION_RESULT" }
   | { type: "START_PD_VALIDATING" }
   | { type: "SET_PD_PREVIEW"; result: PdPreviewResult }
   | { type: "SET_PD_PREVIEW_ERROR"; error: string }
   | { type: "CLEAR_PD_PREVIEW" }
   | { type: "REQUEST_FILE_UPLOAD"; kind: FileInputType }
-  | { type: "CLEAR_UPLOAD_FOCUS" };
-
-// ── Mock seed files ───────────────────────────────────────────────────────
-
-export const SEED_FILES: Record<FileInputType, UploadedFile> = {
-  PD: { id: "pd1", name: "PD_loans_2026-05.xlsx", size: "2.4 MB", sheets: 3, type: "PD", status: "ok", hash: "a3f9…2c1b" },
-  LGD: { id: "lgd1", name: "LGD_collateral_05.xlsx", size: "1.1 MB", sheets: 1, type: "LGD", status: "ok", hash: "c81a…77fe" },
-  EAD: { id: "ead1", name: "EAD_balances_05.xlsx", size: "3.7 MB", sheets: 2, type: "EAD", status: "ok", hash: "e918…5b6d" },
-};
-
-export const EXTRA_PD_FILE: UploadedFile = {
-  id: "pd2", name: "PD_branch4.xlsx", size: "1.1 MB", sheets: 1, type: "PD", status: "warn", hash: "7d10…b8e4",
-};
-
-export const DETECTED_SEGMENTS = [
-  "Transport", "Agriculture", "Trade", "Manufacturing", "Real Estate", "Education", "SME",
-];
+  | { type: "CLEAR_UPLOAD_FOCUS" }
+  | { type: "START_STEP_VALIDATING"; kind: "LGD" | "EAD" }
+  | { type: "SET_LGD_VALIDATION"; result: LgdValidationResult }
+  | { type: "SET_EAD_VALIDATION"; result: EadValidationResult }
+  | { type: "SET_STEP_ERROR"; kind: "LGD" | "EAD"; error: string }
+  | { type: "RESET_VALIDATION_FROM"; kind: FileInputType }
+  | { type: "SET_REVIEW_ACCEPTED"; kind: FileInputType; value: boolean };

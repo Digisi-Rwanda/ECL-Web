@@ -1627,8 +1627,33 @@
 .pdts-table td { padding: 8px 12px; }
 .pdts-table tr[data-first] td { border-top: 2px solid var(--accent-subtle); }
 .pdts-strong { color: var(--text); font-weight: var(--fw-semibold); }
-.pdts-how { display: flex; flex-direction: column; gap: 2px; }
-.pdts-rule { font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--text-subtle); }
 .pdts-pager { display: inline-flex; align-items: center; gap: 8px; }
 .pdts-final-head { gap: 12px; flex-wrap: wrap; margin-bottom: var(--sp-3); }
 .pdts-error { color: var(--danger, #dc2626); font-size: var(--fs-caption); margin: 0 0 var(--sp-3); }
+
+/* LGD / EAD validation and ECL report (spec v1.0) */
+.ecl-h3 { font-size: var(--fs-h3); margin: var(--sp-6) 0 10px; }
+.ecl-facts { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: 6px; }
+.ecl-facts li { display: flex; gap: 8px; align-items: flex-start; font-size: var(--fs-body); color: var(--text-muted); line-height: 1.5; }
+.ecl-facts li svg { flex: none; margin-top: 3px; color: var(--text-subtle); }
+.ecl-facts b { color: var(--text); font-weight: var(--fw-medium); }
+.ecl-accept { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text); }
+.ecl-accept input { accent-color: var(--accent); width: 16px; height: 16px; }
+.ecl-clickable { cursor: pointer; }
+.ecl-clickable:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.ecl-clickable[aria-selected="true"] td { background: var(--accent-subtle); }
+.ecl-total td { font-weight: var(--fw-semibold); border-top: 2px solid var(--border-strong); }
+.ecl-recon { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ecl-recon li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--r-md); }
+.ecl-recon li[data-passed="true"] svg { color: var(--success); flex: none; margin-top: 2px; }
+.ecl-recon li[data-passed="false"] svg { color: var(--danger); flex: none; margin-top: 2px; }
+.ecl-recon-name { display: flex; align-items: center; gap: 8px; font-weight: var(--fw-medium); color: var(--text); }
+.ecl-two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.ecl-preview-head { gap: 12px; flex-wrap: wrap; margin: var(--sp-6) 0 var(--sp-3); }
+.ecl-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ecl-date { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--fs-caption); color: var(--text-muted); }
+.ecl-date input { width: 160px; }
+@media (max-width: 900px) {
+  .ecl-two { grid-template-columns: 1fr; }
+  .ecl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

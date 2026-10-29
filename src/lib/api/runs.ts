@@ -97,28 +97,6 @@ export interface RunDetailRaw extends RunListItemRaw {
   acceptedWarnings?: number | null;
 }
 
-export interface ValidationIssueRaw {
-  id: string;
-  level: "warn" | "block";
-  kind?: "PD" | "LGD" | "EAD";
-  upload_id?: string | null;
-  filename?: string | null;
-  category?: string | null;
-  title: string;
-  location?: string;
-  fix?: string;
-}
-
-export interface ValidationResultRaw {
-  status: "ok" | "warn" | "blocking";
-  summary?: string;
-  sub_summary?: string;
-  issues: ValidationIssueRaw[];
-  detected_segments?: string[];
-  blocking_count?: number;
-  warning_count?: number;
-}
-
 export interface UploadResultRaw {
   id: string;
   kind: "PD" | "LGD" | "EAD";
@@ -234,7 +212,7 @@ export async function updateRun(
   token: string,
   tenantId: string,
   runId: string,
-  body: { combine_pd_files?: boolean; name?: string; reporting_period?: string },
+  body: { combine_pd_files?: boolean; name?: string; reporting_period?: string; reporting_date?: string | null },
 ): Promise<RunDetailRaw> {
   return apiFetch<RunDetailRaw>(`/tenants/${tenantId}/runs/${runId}`, {
     method: "PATCH",
@@ -267,18 +245,6 @@ export async function rerunRun(
   });
 }
 
-export async function validateRun(
-  token: string,
-  tenantId: string,
-  runId: string,
-  body: { accepted_warning_ids: string[] },
-): Promise<ValidationResultRaw> {
-  return apiFetch<ValidationResultRaw>(
-    `/tenants/${tenantId}/runs/${runId}/validate`,
-    { method: "POST", body: JSON.stringify(body), token, timeoutMs: 180_000 },
-  );
-}
-
 export async function executeRun(
   token: string,
   tenantId: string,
@@ -290,10 +256,18 @@ export async function executeRun(
   );
 }
 
-export type OutputArtifactKind = "PD_CALCS" | "LGD" | "RUNDOWN" | "ECL_SUMMARY";
+export type OutputArtifactKind =
+  | "PD_CALCS"
+  | "LOAN_DETAIL"
+  | "PORTFOLIO_SUMMARY"
+  | "LGD"
+  | "RUNDOWN"
+  | "ECL_SUMMARY";
 
 const ARTIFACT_DEFAULT_FILENAMES: Record<OutputArtifactKind, string> = {
   PD_CALCS: "PD Calcs.xlsx",
+  LOAN_DETAIL: "ECL Loan Detail.xlsx",
+  PORTFOLIO_SUMMARY: "ECL Portfolio Summary.xlsx",
   LGD: "LGD.xlsx",
   RUNDOWN: "Contractual Rundown.xlsx",
   ECL_SUMMARY: "ECL Summary.xlsx",
