@@ -23,11 +23,9 @@ export function PdValidateActionRow() {
   const showLoading = status === "loading";
   const showWarn = status === "ready" && preview?.status === "warn";
 
+  // The Validate step sends the request whenever PD is idle; this only resets and navigates.
   function goValidate(revalidate: boolean) {
-    if (revalidate) {
-      dispatch({ type: "CLEAR_PD_PREVIEW" });
-      dispatch({ type: "START_PD_VALIDATING" });
-    }
+    if (revalidate) dispatch({ type: "CLEAR_PD_PREVIEW" });
     dispatch({ type: "GO_TO_STEP", step: "validate" });
   }
 
