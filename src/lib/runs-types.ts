@@ -108,7 +108,7 @@ export const defaultRunListFilter: RunListFilter = {
 
 // ── Tab IDs ────────────────────────────────────────────────────────────────
 
-export type RunDetailTab = "overview" | "inputs" | "audit" | "engine";
+export type RunDetailTab = "overview" | "report" | "inputs" | "audit" | "engine";
 
 export const TAB_CONFIG: {
   id: RunDetailTab;
@@ -116,6 +116,7 @@ export const TAB_CONFIG: {
   iconName: string;
 }[] = [
   { id: "overview", label: "Overview", iconName: "BarChart3" },
+  { id: "report", label: "ECL report", iconName: "ClipboardCheck" },
   { id: "inputs", label: "Inputs", iconName: "File" },
   { id: "audit", label: "Audit trail", iconName: "Clock" },
   { id: "engine", label: "Engine", iconName: "Cpu" },
@@ -125,7 +126,7 @@ export const TAB_CONFIG: {
 export function getVisibleTabs(status: RunDetailStatus): RunDetailTab[] {
   if (status === "running") return ["inputs", "audit"];
   if (status === "failed") return ["inputs", "audit", "engine"];
-  return ["overview", "inputs", "audit", "engine"];
+  return ["overview", "report", "inputs", "audit", "engine"];
 }
 
 export function getDefaultTab(status: RunDetailStatus): RunDetailTab {

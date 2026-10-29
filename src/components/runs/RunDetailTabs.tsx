@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart3, File, Clock, Cpu } from "lucide-react";
+import { BarChart3, ClipboardCheck, File, Clock, Cpu } from "lucide-react";
 import { OverviewTab } from "./tabs/OverviewTab";
 import { InputsTab } from "./tabs/InputsTab";
 import { AuditTab } from "./tabs/AuditTab";
 import { EngineTab } from "./tabs/EngineTab";
+import { EclReportTab } from "./tabs/EclReportTab";
 import { getVisibleTabs, getDefaultTab, TAB_CONFIG } from "@/lib/runs-types";
 import type { RunDetail, RunDetailTab } from "@/lib/runs-types";
 
 const ICONS: Record<string, React.ElementType> = {
-  BarChart3, File, Clock, Cpu,
+  BarChart3, ClipboardCheck, File, Clock, Cpu,
 };
 
 interface RunDetailTabsProps {
@@ -59,6 +60,7 @@ export function RunDetailTabs({ run, onRerun }: RunDetailTabsProps) {
           aria-label={activeTab}
         >
           {activeTab === "overview" && <OverviewTab run={run} />}
+          {activeTab === "report"   && <EclReportTab run={run} />}
           {activeTab === "inputs"   && <InputsTab run={run} />}
           {activeTab === "audit"    && <AuditTab run={run} />}
           {activeTab === "engine"   && <EngineTab run={run} onRerun={onRerun} />}

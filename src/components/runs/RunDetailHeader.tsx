@@ -22,14 +22,27 @@ interface RunDetailHeaderProps {
   onOpenModal: (kind: NonNullable<ModalKind>) => void;
 }
 
-const DOWNLOADS: { kind: OutputArtifactKind; label: string }[] = [
+const SPEC_DOWNLOADS: { kind: OutputArtifactKind; label: string }[] = [
+  { kind: "PD_CALCS", label: "PD term structure (.xlsx)" },
+  { kind: "LOAN_DETAIL", label: "Loan detail: rows, loans, exceptions (.xlsx)" },
+  { kind: "PORTFOLIO_SUMMARY", label: "Portfolio summary: stage & segment (.xlsx)" },
+];
+
+// Runs computed before engine v1.3.0 (ECL Calculation Specification v1.0).
+const LEGACY_DOWNLOADS: { kind: OutputArtifactKind; label: string }[] = [
   { kind: "PD_CALCS", label: "PD term structure (.xlsx)" },
   { kind: "LGD", label: "LGD workbook (.xlsx)" },
   { kind: "RUNDOWN", label: "Contractual rundown (.xlsx)" },
   { kind: "ECL_SUMMARY", label: "ECL summary (.xlsx)" },
 ];
 
-function DownloadMenu({ runFullId, style }: { runFullId: string; style: React.CSSProperties }) {
+export function isSpecV1Engine(version: string | undefined): boolean {
+  const m = /^v?(\d+)\.(\d+)/.exec(version ?? "");
+  return !!m && (Number(m[1]) > 1 || (Number(m[1]) === 1 && Number(m[2]) >= 3));
+}
+
+function DownloadMenu({ runFullId, engineVersion, style }: { runFullId: string; engineVersion: string; style: React.CSSProperties }) {
+  const DOWNLOADS = isSpecV1Engine(engineVersion) ? SPEC_DOWNLOADS : LEGACY_DOWNLOADS;
   const { token, tenantId } = useApiSession();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<OutputArtifactKind | "bundle" | null>(null);
@@ -109,10 +122,12 @@ function DownloadMenu({ runFullId, style }: { runFullId: string; style: React.CS
 function ActionButtons({
   status,
   runFullId,
+  engineVersion,
   onOpenModal,
 }: {
   status: RunDetailStatus;
   runFullId: string;
+  engineVersion: string;
   onOpenModal: (k: NonNullable<ModalKind>) => void;
 }) {
   const btnBase: React.CSSProperties = {
@@ -157,7 +172,7 @@ function ActionButtons({
   if (status === "success") {
     return (
       <>
-        <DownloadMenu runFullId={runFullId} style={{ ...btnBase, background: "var(--surface)", color: "var(--text)" }} />
+        <DownloadMenu runFullId={runFullId} engineVersion={engineVersion} style={{ ...btnBase, background: "var(--surface)", color: "var(--text)" }} />
         <Link
           href={`/results?run_id=${encodeURIComponent(runFullId)}`}
           style={{
@@ -273,7 +288,7 @@ export function RunDetailHeader({ run, onOpenModal }: RunDetailHeaderProps) {
         </div>
 
         <div className="detail-actions">
-          <ActionButtons status={run.status} runFullId={run.fullId} onOpenModal={onOpenModal} />
+          <ActionButtons status={run.status} runFullId={run.fullId} engineVersion={run.engineInfo.version} onOpenModal={onOpenModal} />
         </div>
       </div>
     </div>
