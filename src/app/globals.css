@@ -1657,3 +1657,4 @@
   .ecl-two { grid-template-columns: 1fr; }
   .ecl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.mp-note { padding: 8px 12px; font-size: var(--fs-caption); color: var(--text-muted); border-bottom: 1px solid var(--border); }

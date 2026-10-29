@@ -10,6 +10,7 @@
  * GET  /tenants/{id}/runs/{runId}/exceptions
  */
 import { apiFetch, ApiError } from "@/lib/api/client";
+import { runValidationJob } from "@/lib/api/validation-job";
 import { buildApiPath } from "@/lib/env";
 import type {
   EadValidationResult,
@@ -20,8 +21,6 @@ import type {
   PdCriterion,
 } from "@/lib/new-run-types";
 
-const VALIDATE_TIMEOUT_MS = 180_000;
-
 interface RawResult<P> {
   status: "ok" | "warn" | "blocking";
   criteria: PdCriterion[];
@@ -30,18 +29,12 @@ interface RawResult<P> {
 }
 
 export async function validateLgdRun(token: string, tenantId: string, runId: string): Promise<LgdValidationResult> {
-  const raw = await apiFetch<RawResult<LgdValidationResult["preview"]>>(
-    `/tenants/${tenantId}/runs/${runId}/validate?scope=lgd`,
-    { method: "POST", body: JSON.stringify({}), token, timeoutMs: VALIDATE_TIMEOUT_MS },
-  );
+  const raw = await runValidationJob<RawResult<LgdValidationResult["preview"]>>(token, tenantId, runId, "lgd");
   return { status: raw.status, criteria: raw.criteria, preview: raw.preview, engineVersion: raw.engine_version };
 }
 
 export async function validateEadRun(token: string, tenantId: string, runId: string): Promise<EadValidationResult> {
-  const raw = await apiFetch<RawResult<EadValidationResult["preview"]>>(
-    `/tenants/${tenantId}/runs/${runId}/validate?scope=ead`,
-    { method: "POST", body: JSON.stringify({}), token, timeoutMs: VALIDATE_TIMEOUT_MS },
-  );
+  const raw = await runValidationJob<RawResult<EadValidationResult["preview"]>>(token, tenantId, runId, "ead");
   return { status: raw.status, criteria: raw.criteria, preview: raw.preview, engineVersion: raw.engine_version };
 }
 

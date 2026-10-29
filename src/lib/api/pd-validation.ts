@@ -1,15 +1,14 @@
 /**
  * PD-scoped validation + preview.
  *
- * POST /tenants/{id}/runs/{runId}/validate?scope=pd
- * The server always returns a 200 with `criteria` and `pd_preview` when the
- * workbook was evaluated — including when it blocks. A 4xx means there was
- * nothing to evaluate (no PD file, unreadable workbook, missing run).
- *
- * Timeout: 180s, like the LGD and EAD steps.
+ * Runs as a background validation job (see validation-job.ts). A finished job
+ * carries `criteria` and `pd_preview` whenever the workbook was evaluated —
+ * including when it blocks. An error means there was nothing to evaluate (no
+ * PD file, unreadable workbook, missing run).
  */
 
-import { apiFetch, ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/client";
+import { runValidationJob } from "@/lib/api/validation-job";
 import type {
   PdCriterion,
   PdCriterionCategory,
@@ -21,7 +20,6 @@ import type {
   ValidationIssue,
 } from "@/lib/new-run-types";
 
-const PD_VALIDATE_TIMEOUT_MS = 180_000;
 
 const MONTH_ABBR = [
   "Jan",
@@ -242,15 +240,7 @@ export async function validatePdRun(
   tenantId: string,
   runId: string,
 ): Promise<PdPreviewResult> {
-  const raw = await apiFetch<PdValidationResultRaw>(
-    `/tenants/${tenantId}/runs/${runId}/validate?scope=pd`,
-    {
-      method: "POST",
-      body: JSON.stringify({ accepted_warning_ids: [] }),
-      token,
-      timeoutMs: PD_VALIDATE_TIMEOUT_MS,
-    },
-  );
+  const raw = await runValidationJob<PdValidationResultRaw>(token, tenantId, runId, "pd");
   if (!raw.criteria?.length || !raw.pd_preview) {
     throw new ApiError(
       "INVALID_PD_PREVIEW",

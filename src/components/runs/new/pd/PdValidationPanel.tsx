@@ -187,6 +187,13 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
               {periodLabel ? ` · ${periodLabel}` : ""}
             </span>
           </div>
+          {activePreview && !search && uniqueLoanIds.length < activePreview.stats.loansObserved && (
+            <p className="t-caption" style={{ margin: "0 0 8px" }}>
+              Showing {uniqueLoanIds.length.toLocaleString()} of{" "}
+              {activePreview.stats.loansObserved.toLocaleString()} loans in this segment. Every loan is used in the
+              matrices, cure rate and PD curve.
+            </p>
+          )}
           <div className="tabs" role="tablist" aria-label="Segment">
             {segments.map((name) => (
               <button

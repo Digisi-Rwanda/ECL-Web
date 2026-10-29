@@ -95,6 +95,7 @@ export interface RunDetailRaw extends RunListItemRaw {
   deletedBy?: string | null;
   deletedAt?: string | null;
   acceptedWarnings?: number | null;
+  workbooksStatus?: string | null;
 }
 
 export interface UploadResultRaw {

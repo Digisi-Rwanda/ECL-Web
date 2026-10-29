@@ -41,7 +41,7 @@ export function isSpecV1Engine(version: string | undefined): boolean {
   return !!m && (Number(m[1]) > 1 || (Number(m[1]) === 1 && Number(m[2]) >= 3));
 }
 
-function DownloadMenu({ runFullId, engineVersion, style }: { runFullId: string; engineVersion: string; style: React.CSSProperties }) {
+function DownloadMenu({ runFullId, engineVersion, workbooksStatus, style }: { runFullId: string; engineVersion: string; workbooksStatus?: string; style: React.CSSProperties }) {
   const DOWNLOADS = isSpecV1Engine(engineVersion) ? SPEC_DOWNLOADS : LEGACY_DOWNLOADS;
   const { token, tenantId } = useApiSession();
   const [open, setOpen] = useState(false);
@@ -66,7 +66,13 @@ function DownloadMenu({ runFullId, engineVersion, style }: { runFullId: string; 
       if (kind === "bundle") await downloadRunWorkbooksBundle(token, tenantId, runFullId);
       else await downloadRunArtifactFile(token, tenantId, runFullId, kind);
     } catch {
-      setError("Download failed. Try again in a moment.");
+      setError(
+        isSpecV1Engine(engineVersion) && workbooksStatus !== "complete"
+          ? workbooksStatus === "error"
+            ? "The workbooks could not be built. Re-run the computation to try again."
+            : "The workbooks are still being prepared. Large portfolios take a few minutes — try again shortly."
+          : "Download failed. Try again in a moment.",
+      );
     } finally {
       setBusy(null);
     }
@@ -94,6 +100,13 @@ function DownloadMenu({ runFullId, engineVersion, style }: { runFullId: string; 
       </button>
       {open && (
         <div className="menu-pop" role="menu">
+          {isSpecV1Engine(engineVersion) && workbooksStatus !== "complete" && (
+            <div className="mp-note" role="status">
+              {workbooksStatus === "error"
+                ? "Workbooks could not be built — re-run to retry."
+                : "Preparing workbooks… large portfolios take a few minutes."}
+            </div>
+          )}
           {DOWNLOADS.map(({ kind, label }) => (
             <button key={kind} className="mp-item" role="menuitem" onClick={() => download(kind)}>
               {icon(kind)}
@@ -123,11 +136,13 @@ function ActionButtons({
   status,
   runFullId,
   engineVersion,
+  workbooksStatus,
   onOpenModal,
 }: {
   status: RunDetailStatus;
   runFullId: string;
   engineVersion: string;
+  workbooksStatus?: string;
   onOpenModal: (k: NonNullable<ModalKind>) => void;
 }) {
   const btnBase: React.CSSProperties = {
@@ -172,7 +187,7 @@ function ActionButtons({
   if (status === "success") {
     return (
       <>
-        <DownloadMenu runFullId={runFullId} engineVersion={engineVersion} style={{ ...btnBase, background: "var(--surface)", color: "var(--text)" }} />
+        <DownloadMenu runFullId={runFullId} engineVersion={engineVersion} workbooksStatus={workbooksStatus} style={{ ...btnBase, background: "var(--surface)", color: "var(--text)" }} />
         <Link
           href={`/results?run_id=${encodeURIComponent(runFullId)}`}
           style={{
@@ -288,7 +303,7 @@ export function RunDetailHeader({ run, onOpenModal }: RunDetailHeaderProps) {
         </div>
 
         <div className="detail-actions">
-          <ActionButtons status={run.status} runFullId={run.fullId} engineVersion={run.engineInfo.version} onOpenModal={onOpenModal} />
+          <ActionButtons status={run.status} runFullId={run.fullId} engineVersion={run.engineInfo.version} workbooksStatus={run.workbooksStatus} onOpenModal={onOpenModal} />
         </div>
       </div>
     </div>

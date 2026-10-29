@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ComputeRing } from "../ComputeRing";
 import { ComputeStageTracker } from "../ComputeStageTracker";
 import { useRunWizard } from "../RunWizardContext";
@@ -9,11 +9,15 @@ import { executeRun, fetchRun } from "@/lib/api/runs";
 import { mapEngineProgress, mapRunListItem } from "@/lib/api/mappers";
 
 const POLL_INTERVAL_MS = 2_000;
-const COMPUTE_TIMEOUT_MS = 8 * 60 * 1000;
-const MAX_POLL_FAILURES = 5;
+// Compute keeps running on the server whatever the browser does; these limits
+// only decide when this screen stops watching.
+const COMPUTE_TIMEOUT_MS = 45 * 60 * 1000;
+// About 5 minutes of continuous failed polls (a restarting or very busy server).
+const MAX_POLL_FAILURES = 150;
 
 export function ComputeStep() {
   const { state, dispatch } = useRunWizard();
+  const [reconnecting, setReconnecting] = useState(false);
   const { token, tenantId } = useApiSession();
   const pollRef         = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,7 +61,7 @@ export function ComputeStep() {
     timeoutRef.current = setTimeout(() => {
       goToFailure(
         "timeout",
-        "Computation exceeded 8 minutes. The Celery worker may be down — run: make worker in the server terminal.",
+        "Still computing after 45 minutes. The run continues on the server — open it from the Runs page to see when it finishes.",
       );
     }, COMPUTE_TIMEOUT_MS);
 
@@ -72,6 +76,7 @@ export function ComputeStep() {
       try {
         const raw = await fetchRun(token, tenantId, state.runId, { view: "progress" });
         failedPolls = 0;
+        setReconnecting(false);
 
         const stages = mapEngineProgress(raw.engineProgress ?? null);
         dispatch({ type: "SET_COMPUTE_STAGES", stages });
@@ -121,8 +126,13 @@ export function ComputeStep() {
         }
       } catch {
         failedPolls++;
+        // A busy or restarting server misses a few polls; keep watching.
+        if (failedPolls >= 3) setReconnecting(true);
         if (failedPolls >= MAX_POLL_FAILURES) {
-          goToFailure("polling", "Lost connection while monitoring compute progress. Check your network.");
+          goToFailure(
+            "polling",
+            "Lost contact with the server for several minutes. The run may still finish — check it on the Runs page.",
+          );
         }
       } finally {
         pollInFlight = false;
@@ -151,10 +161,15 @@ export function ComputeStep() {
         <h2 style={{ fontSize: "var(--fs-h2)" }}>Computing your ECL</h2>
         <p className="rc-sub" style={{ marginTop: 6 }}>
           {hasStarted
-            ? "This usually takes under a minute for a portfolio this size."
+            ? "Large portfolios can take several minutes. You can leave this page; the run continues on the server."
             : "Starting the PD, LGD and EAD engines…"}
         </p>
         <ComputeStageTracker stages={state.computeStages} />
+        {reconnecting && (
+          <p className="rc-sub" role="status" style={{ marginTop: 12 }}>
+            Reconnecting to the server… the computation keeps running in the meantime.
+          </p>
+        )}
       </div>
     </div>
   );

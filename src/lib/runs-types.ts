@@ -84,6 +84,8 @@ export const RunDetailSchema = RunListItemSchema.extend({
   deletedBy: z.string().optional(),
   deletedAt: z.string().optional(),
   acceptedWarnings: z.number().optional(),
+  /** pending | running | complete | error — Excel downloads are built after the run completes. */
+  workbooksStatus: z.string().optional(),
 });
 export type RunDetail = Omit<z.infer<typeof RunDetailSchema>, "kpis" | "segments"> & {
   kpis: KpiData[];

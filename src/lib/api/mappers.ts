@@ -603,6 +603,7 @@ export function mapRunDetail(raw: RunDetailRaw): RunDetail {
     deletedBy: raw.deletedBy ?? undefined,
     deletedAt: raw.deletedAt ?? undefined,
     acceptedWarnings: raw.acceptedWarnings ?? undefined,
+    workbooksStatus: raw.workbooksStatus ?? undefined,
   };
 }
 
