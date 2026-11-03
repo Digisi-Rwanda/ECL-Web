@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev.mjs",
     "dev:clean": "rm -rf .next/dev/cache/turbopack && next dev",
     "cache:prune": "rm -rf .next/dev/cache/turbopack",
     "cache:reset": "rm -rf .next",
