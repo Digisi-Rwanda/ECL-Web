@@ -57,6 +57,20 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
   const [density, setDensity] = useState<"compact" | "comfortable">("compact");
   const [runId,   setRunId]   = useState(initialRunId ?? "");
   const [segmentPage, setSegmentPage] = useState(1);
+  // Search is sent to the server 300 ms after typing stops, not per keystroke.
+  const [searchQuery, setSearchQuery] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setSearchQuery(filter.search.trim());
+      setSegmentPage(1);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [filter.search]);
+  // All stages ticked = no stage filter.
+  const stages = filter.stageFilters.every(Boolean)
+    ? undefined
+    : (["Stage 1", "Stage 2", "Stage 3"] as const).filter((_, i) => filter.stageFilters[i]);
+  const stageKey = stages?.join() ?? "all";
   const SEGMENT_PER_PAGE = 50;
   const [exportBusy, setExportBusy] = useState<ExportKind | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -82,10 +96,12 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
 
   // Portfolio query
   const portfolioQuery = useAuthedQuery(
-    ["portfolio", tenantId, runId, filter.stageFilters.indexOf(false) >= 0 ? filter.stageFilters.join() : "all", filter.minEcl ?? "none"],
+    ["portfolio", tenantId, runId, stageKey, filter.minEcl ?? "none", searchQuery],
     (token, tid) =>
       fetchPortfolio(token, tid, {
         run_id: runId || undefined,
+        stages: stages ? [...stages] : undefined,
+        q: searchQuery || undefined,
         min_ecl: filter.minEcl,
       }),
     { staleTime: 60_000 },
@@ -93,12 +109,14 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
 
   // Segment query — only enabled when drilling into a segment
   const segmentQuery = useAuthedQuery(
-    ["segment", tenantId, runId, curSeg, filter.minEcl ?? "none", segmentPage],
+    ["segment", tenantId, runId, curSeg, stageKey, filter.minEcl ?? "none", searchQuery, segmentPage],
     (token, tid) =>
       fetchSegmentResults(token, tid, curSeg, {
         run_id: runId || undefined,
         per_page: SEGMENT_PER_PAGE,
         page: segmentPage,
+        stages: stages ? [...stages] : undefined,
+        q: searchQuery || undefined,
         min_ecl: filter.minEcl,
       }),
     { enabled: level === "segment" && !!curSeg, staleTime: 60_000 },
@@ -379,6 +397,7 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
             hidden={false}
             onChange={handleFilterChange}
             onClearFilters={clearFilters}
+            showColumns={level === "segment"}
           />
         )}
 

@@ -46,13 +46,9 @@ export function SegmentLoansTable({
 }: SegmentLoansTableProps) {
   const visibleCols = filter.visibleColumns ?? DEFAULT_VISIBLE_COLUMNS;
 
-  const filtered = loans.filter((loan) => {
-    const stageOk = filter.stageFilters[loan.stage - 1];
-    const q = filter.search.toLowerCase();
-    const searchOk = !q || loan.id.toLowerCase().includes(q) || loan.customer.toLowerCase().includes(q);
-    const minEclOk = filter.minEcl == null || loan.ecl >= filter.minEcl;
-    return stageOk && searchOk && minEclOk;
-  });
+  // Stage, search and min-ECL are applied by the server across every loan of
+  // the segment; this page already holds only matching loans.
+  const filtered = loans;
 
   if (filtered.length === 0) {
     return <ResultsEmptyState onClearFilters={onClearFilters} />;

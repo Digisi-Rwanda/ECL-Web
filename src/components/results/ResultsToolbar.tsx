@@ -11,9 +11,10 @@ interface ResultsToolbarProps {
   hidden: boolean;
   onChange: (patch: Partial<ExplorerFilter>) => void;
   onClearFilters: () => void;
+  showColumns: boolean;
 }
 
-export function ResultsToolbar({ filter, rowSummary, hidden, onChange }: ResultsToolbarProps) {
+export function ResultsToolbar({ filter, rowSummary, hidden, onChange, showColumns }: ResultsToolbarProps) {
   const [stageOpen, setStageOpen] = useState(false);
   const [minEclOpen, setMinEclOpen] = useState(false);
   const [columnsOpen, setColumnsOpen] = useState(false);
@@ -53,6 +54,8 @@ export function ResultsToolbar({ filter, rowSummary, hidden, onChange }: Results
   function toggleStage(i: number) {
     const next = [...filter.stageFilters] as [boolean, boolean, boolean];
     next[i] = !next[i];
+    // At least one stage stays selected; "none" would only ever show an empty table.
+    if (!next.some(Boolean)) return;
     onChange({ stageFilters: next });
   }
 
@@ -203,6 +206,8 @@ export function ResultsToolbar({ filter, rowSummary, hidden, onChange }: Results
       </div>
 
       {/* Columns */}
+      {/* Columns choose loan-table columns, so they only exist where a loan table does. */}
+      {showColumns && (
       <div className="fdrop" ref={columnsRef}>
         <button
           className={`fbtn${hiddenColCount > 0 ? " active" : ""}`}
@@ -243,6 +248,7 @@ export function ResultsToolbar({ filter, rowSummary, hidden, onChange }: Results
           </div>
         )}
       </div>
+      )}
 
       <div className="spacer" />
       <span className="row-summary" aria-live="polite">{rowSummary}</span>

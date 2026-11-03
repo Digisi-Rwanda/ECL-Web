@@ -98,13 +98,19 @@ export interface SegmentViewRaw {
 
 export interface FetchPortfolioParams {
   run_id?: string;
-  stage?: string;
+  /** Stages to include ("Stage 1"…); omitted or empty = all. */
+  stages?: string[];
+  /** Loan or customer ID contains (case-insensitive). */
+  q?: string;
   min_ecl?: number;
 }
 
 export interface FetchSegmentParams {
   run_id?: string;
-  stage?: string;
+  /** Stages to include ("Stage 1"…); omitted or empty = all. */
+  stages?: string[];
+  /** Loan or customer ID contains (case-insensitive). */
+  q?: string;
   min_ecl?: number;
   page?: number;
   per_page?: number;
@@ -121,7 +127,8 @@ export async function fetchPortfolio(
 ): Promise<PortfolioRaw> {
   const qs = new URLSearchParams();
   if (params?.run_id) qs.set("run_id", params.run_id);
-  if (params?.stage) qs.set("stage", params.stage);
+  for (const stage of params?.stages ?? []) qs.append("stage", stage);
+  if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.min_ecl != null) qs.set("min_ecl", String(params.min_ecl));
   const query = qs.toString() ? `?${qs.toString()}` : "";
   return apiFetch<PortfolioRaw>(`/tenants/${tenantId}/results${query}`, { token });
@@ -135,7 +142,8 @@ export async function fetchSegmentResults(
 ): Promise<SegmentViewRaw> {
   const qs = new URLSearchParams();
   if (params?.run_id) qs.set("run_id", params.run_id);
-  if (params?.stage) qs.set("stage", params.stage);
+  for (const stage of params?.stages ?? []) qs.append("stage", stage);
+  if (params?.q?.trim()) qs.set("q", params.q.trim());
   if (params?.min_ecl != null) qs.set("min_ecl", String(params.min_ecl));
   if (params?.page) qs.set("page", String(params.page));
   if (params?.per_page) qs.set("per_page", String(params.per_page));
