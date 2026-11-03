@@ -13,7 +13,6 @@ declare module "@auth/core/types" {
       role: string;
       currency: string;
       isEmailVerified: boolean;
-      isOnboardingComplete: boolean;
       isPlatformAdmin: boolean;
     };
   }
@@ -25,7 +24,6 @@ declare module "@auth/core/types" {
     role?: string;
     currency?: string;
     isEmailVerified?: boolean;
-    isOnboardingComplete?: boolean;
     isPlatformAdmin?: boolean;
   }
 }
@@ -39,7 +37,6 @@ declare module "@auth/core/jwt" {
     role?: string;
     currency?: string;
     isEmailVerified?: boolean;
-    isOnboardingComplete?: boolean;
     isPlatformAdmin?: boolean;
   }
 }

@@ -11,6 +11,7 @@ import { TenantProfileSection } from "./sections/TenantProfileSection";
 import { SaveBar } from "@/components/shared/SaveBar";
 import { ToastStack, makeToastId } from "@/components/shared/ToastStack";
 import { SkeletonBlock } from "@/components/dashboard/shared/SkeletonBlock";
+import { useSession } from "next-auth/react";
 import { useApiSession } from "@/hooks/use-api-session";
 import { formatRole } from "@/lib/api/mappers";
 import {
@@ -50,6 +51,7 @@ const FADE = {
 
 export function AdminView({ userRole: userRoleProp }: AdminViewProps) {
   const { role, token, tenantId } = useApiSession();
+  const { update: updateSession } = useSession();
   const userRole = userRoleProp ?? formatRole(role ?? "administrator");
   const isAdmin = userRole === "Admin" || userRole === "Administrator";
 
@@ -128,8 +130,11 @@ export function AdminView({ userRole: userRoleProp }: AdminViewProps) {
         await updateTenantProfile(token, tenantId, {
           name: profile.name,
           reporting_cadence: profile.reportingCadence.toLowerCase(),
+          currency: profile.currency,
           timezone: profile.timezone,
         });
+        // The session carries the workspace currency; refresh it so the change shows at once.
+        await updateSession({ currency: profile.currency });
       } else if (dirtySection === "segments") {
         const snap = snapshots.current.segments;
         for (const seg of segments) {

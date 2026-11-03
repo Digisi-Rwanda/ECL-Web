@@ -80,7 +80,6 @@ function buildUserFromAuthData(data: {
     role: user.role as string,
     currency: (user.currency as string) ?? "USD",
     isEmailVerified: (user.is_email_verified ?? user.isEmailVerified) as boolean,
-    isOnboardingComplete: (user.is_onboarding_complete ?? user.isOnboardingComplete) as boolean,
     isPlatformAdmin: (user.is_platform_admin ?? user.isPlatformAdmin ?? false) as boolean,
   };
 }
@@ -216,8 +215,6 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         if (typeof s.role === "string") token.role = s.role;
         if (typeof s.currency === "string") token.currency = s.currency;
         if (typeof s.isEmailVerified === "boolean") token.isEmailVerified = s.isEmailVerified;
-        if (typeof s.isOnboardingComplete === "boolean")
-          token.isOnboardingComplete = s.isOnboardingComplete;
       }
       if (user) {
         const u = user as Record<string, unknown>;
@@ -228,7 +225,6 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         token.role = u.role as string;
         token.currency = (u.currency as string) ?? "USD";
         token.isEmailVerified = u.isEmailVerified as boolean;
-        token.isOnboardingComplete = u.isOnboardingComplete as boolean;
         token.isPlatformAdmin = u.isPlatformAdmin as boolean;
       }
 
@@ -256,7 +252,6 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         session.user.role = token.role as string;
         session.user.currency = (token.currency as string) ?? "USD";
         session.user.isEmailVerified = token.isEmailVerified as boolean;
-        session.user.isOnboardingComplete = token.isOnboardingComplete as boolean;
         session.user.isPlatformAdmin = token.isPlatformAdmin as boolean;
       }
       return session;

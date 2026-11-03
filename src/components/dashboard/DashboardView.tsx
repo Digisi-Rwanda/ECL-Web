@@ -123,7 +123,13 @@ export function DashboardView({ initialData }: DashboardViewProps) {
 
               {/* Charts (dimmed when setup incomplete) */}
               {segments.length > 0 && stages.length > 0 && (
-                <ChartsGrid segments={segments} stages={stages} dimmed={isIncomplete} />
+                <ChartsGrid
+                  segments={segments}
+                  stages={stages}
+                  // The chart shows the latest run, so label it with that run's currency.
+                  currency={kpis.find((k) => k.currencyPrefix)?.currencyPrefix ?? tenant.currency}
+                  dimmed={isIncomplete}
+                />
               )}
 
               {/* Trend chart */}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useApiSession } from "@/hooks/use-api-session";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/providers/ThemeProvider";
 import { ThemePicker } from "../appearance/ThemePicker";
@@ -10,6 +11,7 @@ interface AppearanceSectionProps {
 }
 
 export function AppearanceSection({ onToast }: AppearanceSectionProps) {
+  const { currency } = useApiSession();
   const { theme, setTheme } = useTheme();
   const [density, setDensityState] = useState<"comfortable" | "compact">("comfortable");
 
@@ -82,7 +84,7 @@ export function AppearanceSection({ onToast }: AppearanceSectionProps) {
             <div className="sr-control">
               <span className="statpill">
                 <span className="k">Currency</span>
-                <span className="v">KES</span>
+                <span className="v">{currency}</span>
               </span>
             </div>
           </div>

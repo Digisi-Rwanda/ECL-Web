@@ -8,11 +8,12 @@ import type { SegmentData } from "@/lib/results-types";
 function fmtKes(n: number): string { return Math.abs(n).toLocaleString("en-US"); }
 
 interface SegmentsTableProps {
+  currency: string;
   segments: SegmentData[];
   onDrillSegment: (name: string) => void;
 }
 
-export function SegmentsTable({ segments, onDrillSegment }: SegmentsTableProps) {
+export function SegmentsTable({ segments, currency, onDrillSegment }: SegmentsTableProps) {
   const totalEcl  = segments.reduce((a, s) => a + s.ecl, 0);
   const totalOut  = segments.reduce((a, s) => a + s.outstanding, 0);
   const totalLns  = segments.reduce((a, s) => a + s.loans, 0);
@@ -24,7 +25,7 @@ export function SegmentsTable({ segments, onDrillSegment }: SegmentsTableProps) 
           <tr>
             <th aria-sort="ascending">Segment</th>
             <th>Stage mix</th>
-            <th className="num">ECL (KES)</th>
+            <th className="num">ECL ({currency})</th>
             <th className="num" style={{ display: "table-cell" }}>Outstanding</th>
             <th className="num">Coverage</th>
             <th className="num">Loans</th>

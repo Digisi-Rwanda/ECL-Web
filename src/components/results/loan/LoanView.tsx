@@ -9,9 +9,10 @@ import type { LoanDetail } from "@/lib/results-types";
 interface LoanViewProps {
   loan: LoanDetail;
   isLoading: boolean;
+  currency: string;
 }
 
-export function LoanView({ loan, isLoading }: LoanViewProps) {
+export function LoanView({ loan, isLoading, currency }: LoanViewProps) {
   if (isLoading) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -42,10 +43,10 @@ export function LoanView({ loan, isLoading }: LoanViewProps) {
       <LoanIdentityGrid loan={loan} />
 
       {/* ECL decomposition chain */}
-      <EclDecompositionChain loan={loan} />
+      <EclDecompositionChain loan={loan} currency={currency} />
 
       {/* Monthly rundown */}
-      <MonthlyRundownTable rundown={loan.rundown} totalMonths={34} />
+      <MonthlyRundownTable rundown={loan.rundown} totalMonths={34} currency={currency} />
     </motion.div>
   );
 }

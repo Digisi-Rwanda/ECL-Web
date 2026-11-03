@@ -7,7 +7,6 @@ export interface SwitchTenantResult {
   tenant_name: string;
   role: string;
   currency: string;
-  is_onboarding_complete: boolean;
 }
 
 export async function switchTenant(token: string, tenantId: string): Promise<SwitchTenantResult> {

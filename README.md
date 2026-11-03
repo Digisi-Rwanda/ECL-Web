@@ -106,7 +106,7 @@ If the browser requests `/sw.js`, it may be from an old PWA registration. The ap
 
 - **Marketing pages** — Static SSR, no backend calls at startup.
 - **Protected routes** — NextAuth JWT in middleware + shell layout; data fetched client-side via React Query after hydration.
-- **Backend dependency** — Required for login, onboarding, dashboard data, etc. Not required for `next dev` to start or for marketing pages to render. When the API is down, protected pages show a banner and inline notices instead of crashing.
+- **Backend dependency** — Required for login, dashboard data, etc. Not required for `next dev` to start or for marketing pages to render. When the API is down, protected pages show a banner and inline notices instead of crashing.
 
 ## Production
 

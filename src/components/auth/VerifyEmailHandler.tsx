@@ -45,7 +45,7 @@ export function VerifyEmailHandler({ token }: Props) {
 
       if (session?.user) {
         await update({ isEmailVerified: true });
-        router.push("/setup/onboarding");
+        router.push("/dashboard");
         return;
       }
 
@@ -85,8 +85,8 @@ export function VerifyEmailHandler({ token }: Props) {
           </h2>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             {session?.user
-              ? "Redirecting you to onboarding…"
-              : "Sign in to continue to onboarding."}
+              ? "Redirecting you to your dashboard…"
+              : "Sign in to continue to your dashboard."}
           </p>
         </div>
       </AuthCard>

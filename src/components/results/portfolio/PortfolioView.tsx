@@ -16,7 +16,7 @@ interface PortfolioViewProps {
   onDrillSegment: (name: string) => void;
 }
 
-export function PortfolioView({ segments, isLoading, currency = "KES", onDrillSegment }: PortfolioViewProps) {
+export function PortfolioView({ segments, isLoading, currency = "USD", onDrillSegment }: PortfolioViewProps) {
   if (isLoading) {
     return (
       <div>
@@ -69,7 +69,7 @@ export function PortfolioView({ segments, isLoading, currency = "KES", onDrillSe
       </div>
 
       {/* Segment table */}
-      <SegmentsTable segments={segments} onDrillSegment={onDrillSegment} />
+      <SegmentsTable segments={segments} currency={currency} onDrillSegment={onDrillSegment} />
     </div>
   );
 }

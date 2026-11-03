@@ -5,11 +5,12 @@ import type { MonthlyRundown } from "@/lib/results-types";
 function fmtKes(n: number): string { return Math.abs(n).toLocaleString("en-US"); }
 
 interface MonthlyRundownTableProps {
+  currency: string;
   rundown: MonthlyRundown[];
   totalMonths: number;
 }
 
-export function MonthlyRundownTable({ rundown, totalMonths }: MonthlyRundownTableProps) {
+export function MonthlyRundownTable({ rundown, totalMonths, currency }: MonthlyRundownTableProps) {
   return (
     <div className="rx-panel" style={{ marginTop: "var(--sp-4)" }}>
       <div className="rx-panel-head">
@@ -26,7 +27,7 @@ export function MonthlyRundownTable({ rundown, totalMonths }: MonthlyRundownTabl
                 <th>Month</th>
                 <th className="num">Marginal PD</th>
                 <th className="num">Cumulative PD</th>
-                <th className="num">EAD (KES)</th>
+                <th className="num">EAD ({currency})</th>
                 <th className="num">Discounted ECL</th>
               </tr>
             </thead>

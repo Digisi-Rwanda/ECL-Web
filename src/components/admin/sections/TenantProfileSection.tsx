@@ -1,8 +1,18 @@
 "use client";
 
-import { Building, Lock, AlertTriangle, Ban } from "lucide-react";
+import { Building, AlertTriangle, Ban } from "lucide-react";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import type { TenantProfile, ModalKind } from "@/lib/admin-types";
+
+// Mirrors SUPPORTED_CURRENCIES in the API (tenants/schemas.py).
+const CURRENCIES = [
+  "USD", "EUR", "GBP", "CHF", "JPY", "CNY", "INR", "AED", "SAR", "ZAR", "NGN", "GHS",
+  "KES", "UGX", "TZS", "RWF", "BIF", "ETB", "CDF", "XAF", "XOF", "MAD", "EGP", "ZMW", "MWK",
+  "MZN", "BWP", "NAD",
+];
+// Every IANA zone the browser knows; the API validates against the same database.
+const TIME_ZONES: string[] =
+  typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ["UTC"];
 
 interface TenantProfileSectionProps {
   profile: TenantProfile;
@@ -67,24 +77,36 @@ export function TenantProfileSection({
           <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-subtle)", marginTop: 4, display: "block" }}>Used for reminders only.</span>
         </div>
 
-        {/* Currency (locked) */}
-        <div className="field locked-field">
-          <label htmlFor="p-cur" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "var(--fs-caption)", color: "var(--text-muted)", fontWeight: "var(--fw-medium)" }}>
-            Primary currency <Lock size={12} style={{ color: "var(--text-subtle)" }} aria-hidden />
-          </label>
-          <input id="p-cur" className="input" value={profile.currency} readOnly style={{ background: "var(--surface-sunken)", color: "var(--text-muted)", cursor: "not-allowed" }} />
-          <Lock size={14} className="lock-ic" aria-hidden />
-          <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-subtle)", marginTop: 4, display: "block" }}>Locked for audit consistency.</span>
+        {/* Currency — default for new runs; each run keeps its own */}
+        <div className="field">
+          <label htmlFor="p-cur" style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", fontWeight: "var(--fw-medium)" }}>Default currency</label>
+          <select
+            id="p-cur"
+            className="select"
+            value={profile.currency}
+            onChange={(e) => { onUpdate({ ...profile, currency: e.target.value }); onMarkDirty(); }}
+          >
+            {(CURRENCIES.includes(profile.currency) ? CURRENCIES : [profile.currency, ...CURRENCIES]).map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+          <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-subtle)", marginTop: 4, display: "block" }}>Used for new runs. Existing runs keep the currency they were computed in.</span>
         </div>
 
-        {/* Timezone (locked) */}
-        <div className="field locked-field">
-          <label htmlFor="p-tz" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: "var(--fs-caption)", color: "var(--text-muted)", fontWeight: "var(--fw-medium)" }}>
-            Time zone <Lock size={12} style={{ color: "var(--text-subtle)" }} aria-hidden />
-          </label>
-          <input id="p-tz" className="input" value={profile.timezone} readOnly style={{ background: "var(--surface-sunken)", color: "var(--text-muted)", cursor: "not-allowed" }} />
-          <Lock size={14} className="lock-ic" aria-hidden />
-          <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-subtle)", marginTop: 4, display: "block" }}>Locked for audit consistency.</span>
+        {/* Time zone */}
+        <div className="field">
+          <label htmlFor="p-tz" style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)", fontWeight: "var(--fw-medium)" }}>Time zone</label>
+          <select
+            id="p-tz"
+            className="select"
+            value={profile.timezone}
+            onChange={(e) => { onUpdate({ ...profile, timezone: e.target.value }); onMarkDirty(); }}
+          >
+            {(TIME_ZONES.includes(profile.timezone) ? TIME_ZONES : [profile.timezone, ...TIME_ZONES]).map((tz) => (
+              <option key={tz}>{tz}</option>
+            ))}
+          </select>
+          <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-subtle)", marginTop: 4, display: "block" }}>Used to display dates and times.</span>
         </div>
       </div>
 

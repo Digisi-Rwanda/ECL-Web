@@ -51,7 +51,7 @@ export async function fetchTenantProfile(token: string, tenantId: string): Promi
 export async function updateTenantProfile(
   token: string,
   tenantId: string,
-  body: Partial<{ name: string; reporting_cadence: string; timezone: string }>,
+  body: Partial<{ name: string; reporting_cadence: string; currency: string; timezone: string }>,
 ) {
   await apiFetch(`/tenants/${tenantId}`, { method: "PATCH", token, body: JSON.stringify(body) });
 }

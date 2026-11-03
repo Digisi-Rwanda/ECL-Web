@@ -16,7 +16,6 @@ export const authConfig = {
         "/settings",
         "/platform",
         "/account",
-        "/setup",
       ];
 
       if (nextUrl.pathname.startsWith("/platform")) {
@@ -49,20 +48,6 @@ export const authConfig = {
           (auth?.user as { email?: string } | undefined)?.email ?? ""
         );
         return Response.redirect(new URL(`/verify-email-pending?email=${email}`, nextUrl));
-      }
-
-      const isOnboardingComplete = (auth?.user as Record<string, unknown> | undefined)
-        ?.isOnboardingComplete as boolean | undefined;
-      const onOnboardingPage = nextUrl.pathname.startsWith("/setup/onboarding");
-
-      // Not yet onboarded → force to onboarding (except if already there)
-      if (isLoggedIn && isProtected && isOnboardingComplete === false && !onOnboardingPage) {
-        return Response.redirect(new URL("/setup/onboarding", nextUrl));
-      }
-
-      // Already onboarded → skip the onboarding page
-      if (isLoggedIn && isOnboardingComplete === true && onOnboardingPage) {
-        return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
       return true;

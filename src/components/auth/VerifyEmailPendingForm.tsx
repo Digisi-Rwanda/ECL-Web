@@ -56,7 +56,7 @@ export function VerifyEmailPendingForm({ email }: Props) {
           ) : (
             "your email address"
           )}
-          . Click it to verify your account and continue to onboarding.
+          . Click it to verify your account and continue to your dashboard.
         </p>
 
         <ResendCountdown key={resendKey} onResend={handleResend} />

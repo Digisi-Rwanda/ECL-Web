@@ -32,10 +32,11 @@ function ChainOp({ symbol }: { symbol: string }) {
 }
 
 interface EclDecompositionChainProps {
+  currency: string;
   loan: LoanDetail;
 }
 
-export function EclDecompositionChain({ loan }: EclDecompositionChainProps) {
+export function EclDecompositionChain({ loan, currency }: EclDecompositionChainProps) {
   const eclKes = `${fmtKes(loan.ecl)}`;
   const eadM   = (loan.ead / 1_000_000).toFixed(2) + "M";
 
@@ -74,7 +75,7 @@ export function EclDecompositionChain({ loan }: EclDecompositionChainProps) {
             <ChainNode
               label="ECL"
               value={eclKes}
-              desc="KES · this loan"
+              desc={`${currency} · this loan`}
               result
               index={3}
             />

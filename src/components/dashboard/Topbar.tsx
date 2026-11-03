@@ -55,7 +55,6 @@ export function Topbar({
         tenantName: data.tenant_name,
         role: data.role,
         currency: data.currency,
-        isOnboardingComplete: data.is_onboarding_complete,
       });
       setActiveTenant({
         ...t,

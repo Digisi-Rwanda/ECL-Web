@@ -479,9 +479,9 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
             >
               {currentLoan ? (
-                <LoanView loan={currentLoan} isLoading={isLoanLoading} />
+                <LoanView loan={currentLoan} isLoading={isLoanLoading} currency={currency} />
               ) : (
-                <LoanView loan={{
+                <LoanView currency={currency} loan={{
                   id: curLoan, customer: "Loading...", stage: 1, pd: 0, lgd: 0, ead: 0, ecl: 0,
                   segment: curSeg, outstanding: 0, collateralValue: 0, maturity: "—", rundown: [],
                 }} isLoading={true} />
