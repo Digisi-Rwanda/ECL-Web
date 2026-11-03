@@ -42,7 +42,7 @@ export function GlimpseCard() {
             fontFamily: "var(--font-mono)",
           }}
         >
-          engine v1.0.3
+          engine v1.3.0
         </span>
       </div>
 

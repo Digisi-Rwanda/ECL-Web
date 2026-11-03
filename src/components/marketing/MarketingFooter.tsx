@@ -87,7 +87,7 @@ export function MarketingFooter() {
         >
           <span>© 2026 ECL Platform. All rights reserved.</span>
           <span style={{ color: "rgba(236,237,245,0.4)" }}>
-            Engine v1.0.3 · IFRS 9 (IFRS 9:2014)
+            Engine v1.3.0 · IFRS 9 (IFRS 9:2014)
           </span>
         </div>
       </div>

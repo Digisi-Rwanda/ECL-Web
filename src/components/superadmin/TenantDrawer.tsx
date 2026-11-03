@@ -111,7 +111,7 @@ export function TenantDrawer({
                 <div className="ds">
                   <div className="k">Engine pin</div>
                   <div className="v" style={{ fontSize: "0.9rem" }}>
-                    v1.0.3 <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>(default)</span>
+                    Latest <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>(default)</span>
                   </div>
                 </div>
               </div>

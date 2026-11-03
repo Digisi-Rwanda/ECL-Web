@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { RunDetailHeader } from "./RunDetailHeader";
@@ -23,7 +23,13 @@ interface RunDetailViewProps {
 export function RunDetailView({ run }: RunDetailViewProps) {
   const [modalKind, setModalKind] = useState<ModalKind>(null);
   const router = useRouter();
-  const { token, tenantId } = useApiSession();
+  const { token, tenantId, role } = useApiSession();
+
+  // A draft is unfinished setup: it continues in the wizard (Runs list, Home, re-run all land here).
+  const resumeDraft = run.status === "draft" && !!role && role !== "reviewer";
+  useEffect(() => {
+    if (resumeDraft) router.replace(`/runs/new?run=${encodeURIComponent(run.fullId)}`);
+  }, [resumeDraft, run.fullId, router]);
 
   const liveQuery = useAuthedQuery(
     ["run-detail", tenantId, run.fullId],
@@ -63,6 +69,8 @@ export function RunDetailView({ run }: RunDetailViewProps) {
       }
     }
   }
+
+  if (resumeDraft) return null;
 
   return (
     <motion.div
