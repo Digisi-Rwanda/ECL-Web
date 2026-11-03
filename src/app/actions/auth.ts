@@ -204,12 +204,16 @@ export async function resetAction(
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const code = (err as Record<string, string>).code ?? "";
-    if (code === "TOKEN_EXPIRED" || code === "TOKEN_INVALID") {
-      return { error: "This link has expired. Request a new one." };
+    const err = (await res.json().catch(() => ({}))) as Record<string, string>;
+    if (err.code === "INVALID_RESET_TOKEN") {
+      return { error: "This reset link is invalid, already used or expired. Request a new one." };
     }
-    return { error: "Password reset failed. Please try again." };
+    if (res.status === 429) {
+      return { error: "Too many attempts. Wait 15 minutes, then try again." };
+    }
+    // Password rule violations (contains your name, found in a data breach, …)
+    // come back with a user-facing detail; show it instead of a generic error.
+    return { error: err.detail || "Password reset failed. Please try again." };
   }
 
   return { success: true };
@@ -264,12 +268,11 @@ export async function verifyEmailAction(token: string): Promise<AuthFormState> {
     `${getBackendUrl()}/api/v1/auth/verify-email/${encodeURIComponent(token)}`
   );
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const code = (err as Record<string, string>).code ?? "";
-    if (code === "TOKEN_EXPIRED" || code === "TOKEN_INVALID") {
+    const err = (await res.json().catch(() => ({}))) as Record<string, string>;
+    if (err.code === "INVALID_VERIFY_TOKEN") {
       return { error: "This verification link has expired. Please request a new one." };
     }
-    return { error: "Verification failed. Please try again." };
+    return { error: err.detail || "Verification failed. Please try again." };
   }
   return { success: true };
 }
