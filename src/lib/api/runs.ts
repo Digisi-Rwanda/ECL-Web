@@ -26,6 +26,8 @@ export interface RunListItemRaw {
 }
 
 export interface RunInputFileRaw {
+  uploadId?: string;
+  warningsAccepted?: boolean;
   type: "PD" | "LGD" | "EAD";
   name: string;
   size: string;
@@ -213,7 +215,7 @@ export async function updateRun(
   token: string,
   tenantId: string,
   runId: string,
-  body: { combine_pd_files?: boolean; name?: string; reporting_period?: string; reporting_date?: string | null },
+  body: { combine_pd_files?: boolean; name?: string; reporting_period?: string; reporting_date?: string | null; currency?: string },
 ): Promise<RunDetailRaw> {
   return apiFetch<RunDetailRaw>(`/tenants/${tenantId}/runs/${runId}`, {
     method: "PATCH",

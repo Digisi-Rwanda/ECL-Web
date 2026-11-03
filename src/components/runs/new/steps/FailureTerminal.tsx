@@ -28,7 +28,7 @@ export function FailureTerminal() {
   const failure = state.failureDetails ?? FALLBACK_FAILURE;
 
   function handleRetry() {
-    dispatch({ type: "GO_TO_STEP", step: "upload" });
+    dispatch({ type: "SET_DATA_FILE", kind: "PD" });
   }
 
   const isLgdFailure = failure.stage === "lgd";

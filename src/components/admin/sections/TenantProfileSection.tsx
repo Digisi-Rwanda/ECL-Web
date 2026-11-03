@@ -3,13 +3,8 @@
 import { Building, AlertTriangle, Ban } from "lucide-react";
 import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import type { TenantProfile, ModalKind } from "@/lib/admin-types";
+import { CURRENCIES } from "@/lib/currencies";
 
-// Mirrors SUPPORTED_CURRENCIES in the API (tenants/schemas.py).
-const CURRENCIES = [
-  "USD", "EUR", "GBP", "CHF", "JPY", "CNY", "INR", "AED", "SAR", "ZAR", "NGN", "GHS",
-  "KES", "UGX", "TZS", "RWF", "BIF", "ETB", "CDF", "XAF", "XOF", "MAD", "EGP", "ZMW", "MWK",
-  "MZN", "BWP", "NAD",
-];
 // Every IANA zone the browser knows; the API validates against the same database.
 const TIME_ZONES: string[] =
   typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : ["UTC"];

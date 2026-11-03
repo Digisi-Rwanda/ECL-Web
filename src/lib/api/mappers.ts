@@ -519,6 +519,8 @@ export function mapRunListItem(raw: RunListItemRaw): RunListItem {
 
 function mapInputFile(raw: RunInputFileRaw): RunInputFile {
   return {
+    uploadId: raw.uploadId,
+    warningsAccepted: raw.warningsAccepted,
     type: raw.type,
     name: raw.name,
     size: raw.size,

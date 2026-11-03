@@ -3,10 +3,11 @@ import { ArrowLeft } from "lucide-react";
 interface RunWizardHeaderProps {
   runName: string;
   tenantName?: string;
+  engineVersion?: string | null;
   onExit: () => void;
 }
 
-export function RunWizardHeader({ runName, tenantName = "Workspace", onExit }: RunWizardHeaderProps) {
+export function RunWizardHeader({ runName, tenantName = "Workspace", engineVersion, onExit }: RunWizardHeaderProps) {
   return (
     <div className="run-head">
       <div className="rh-left">
@@ -24,10 +25,12 @@ export function RunWizardHeader({ runName, tenantName = "Workspace", onExit }: R
           </div>
         </div>
       </div>
-      <span className="statpill">
-        <span className="k">Engine</span>
-        <span className="v">v1.0.3</span>
-      </span>
+      {engineVersion && (
+        <span className="statpill">
+          <span className="k">Engine</span>
+          <span className="v">{engineVersion}</span>
+        </span>
+      )}
     </div>
   );
 }

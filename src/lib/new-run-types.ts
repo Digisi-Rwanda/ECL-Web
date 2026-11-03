@@ -1,14 +1,15 @@
 // ── Step machine ───────────────────────────────────────────────────────────
 
 export type NewRunStep =
-  | "upload"
-  | "validate"
-  | "confirm"
+  | "data"
+  | "review"
   | "compute"
   | "success"
   | "failure";
 
-export const STEP_ORDER: NewRunStep[] = ["upload", "validate", "confirm", "compute"];
+export const STEP_ORDER: NewRunStep[] = ["data", "review", "compute"];
+/** Order of the files inside the Data step. */
+export const DATA_FILES: FileInputType[] = ["PD", "LGD", "EAD"];
 
 export function stepIndex(step: NewRunStep): number {
   const idx = STEP_ORDER.indexOf(step);
@@ -294,8 +295,13 @@ export interface NewRunState {
   cancelModalOpen: boolean;
   uploadProgress: Record<string, number>;
   uploadedFileIds: Record<string, string>;
-  /** When returning to Upload from Validate, scroll to and highlight this zone. */
-  uploadFocus: FileInputType | null;
+  /** File in focus inside the Data step. */
+  dataFile: FileInputType;
+  /** Run currency (snapshot of the workspace default, editable until compute). */
+  currency: string | null;
+  engineVersion: string | null;
+  /** True while a resumed run is being rebuilt from the server. */
+  hydrating: boolean;
   lgdValidation: LgdValidationResult | null;
   lgdStatus: EclStepStatus;
   lgdError: string | null;
@@ -331,8 +337,11 @@ export type NewRunAction =
   | { type: "SET_PD_PREVIEW"; result: PdPreviewResult }
   | { type: "SET_PD_PREVIEW_ERROR"; error: string }
   | { type: "CLEAR_PD_PREVIEW" }
-  | { type: "REQUEST_FILE_UPLOAD"; kind: FileInputType }
-  | { type: "CLEAR_UPLOAD_FOCUS" }
+  | { type: "SET_DATA_FILE"; kind: FileInputType }
+  | { type: "SET_RUN_CURRENCY"; currency: string }
+  | { type: "SET_RUN_META"; runId: string; runName?: string; currency?: string; engineVersion?: string }
+  | { type: "HYDRATE"; files: UploadedFile[]; combinePdFiles: boolean }
+  | { type: "SET_HYDRATING"; value: boolean }
   | { type: "START_STEP_VALIDATING"; kind: "LGD" | "EAD" }
   | { type: "SET_LGD_VALIDATION"; result: LgdValidationResult }
   | { type: "SET_EAD_VALIDATION"; result: EadValidationResult }

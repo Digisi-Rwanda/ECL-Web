@@ -13,9 +13,10 @@ import {
 // ── Default state ──────────────────────────────────────────────────────────
 
 const initialState: NewRunState = {
-  step: "upload",
-  prevStep: "upload",
-  runName: "May 2026",
+  step: "data",
+  prevStep: "data",
+  // Current month, e.g. "Nov 2026"; editable on the Review step.
+  runName: new Date().toLocaleString("en-US", { month: "short", year: "numeric" }),
   runId: null,
   runInitError: null,
   pdFiles: [],
@@ -32,7 +33,10 @@ const initialState: NewRunState = {
   cancelModalOpen: false,
   uploadProgress: {},
   uploadedFileIds: {},
-  uploadFocus: null,
+  dataFile: "PD",
+  currency: null,
+  engineVersion: null,
+  hydrating: false,
   lgdValidation: null,
   lgdStatus: "idle",
   lgdError: null,
@@ -84,14 +88,12 @@ function reducer(state: NewRunState, action: NewRunAction): NewRunState {
       return {
         ...resetFrom(state, "LGD"),
         lgdFile: action.file,
-        uploadFocus: action.file ? null : state.uploadFocus,
       };
 
     case "SET_EAD_FILE":
       return {
         ...resetFrom(state, "EAD"),
         eadFile: action.file,
-        uploadFocus: action.file ? null : state.uploadFocus,
       };
 
     case "START_STEP_VALIDATING":
@@ -124,7 +126,6 @@ function reducer(state: NewRunState, action: NewRunAction): NewRunState {
         ...state,
         prevStep: state.step,
         step: action.step,
-        uploadFocus: action.step === "upload" ? state.uploadFocus : null,
       };
 
     case "SET_COMPUTE_PROGRESS":
@@ -179,7 +180,7 @@ function reducer(state: NewRunState, action: NewRunAction): NewRunState {
     }
 
     case "START_PD_VALIDATING":
-      return { ...state, pdPreview: null, pdPreviewStatus: "loading", pdPreviewError: null, reviewAccepted: { ...state.reviewAccepted, PD: false } };
+      return { ...state, pdPreview: null, pdPreviewStatus: "loading", pdPreviewError: null };
 
     case "SET_PD_PREVIEW":
       return {
@@ -195,16 +196,34 @@ function reducer(state: NewRunState, action: NewRunAction): NewRunState {
     case "CLEAR_PD_PREVIEW":
       return { ...state, pdPreview: null, pdPreviewStatus: "idle", pdPreviewError: null };
 
-    case "REQUEST_FILE_UPLOAD":
+    case "SET_DATA_FILE":
+      return { ...state, prevStep: state.step, step: "data", dataFile: action.kind };
+
+    case "SET_RUN_CURRENCY":
+      return { ...state, currency: action.currency };
+
+    case "SET_RUN_META":
       return {
         ...state,
-        prevStep: state.step,
-        step: "upload",
-        uploadFocus: action.kind,
+        runId: action.runId,
+        runInitError: null,
+        runName: action.runName ?? state.runName,
+        currency: action.currency ?? state.currency,
+        engineVersion: action.engineVersion ?? state.engineVersion,
       };
 
-    case "CLEAR_UPLOAD_FOCUS":
-      return { ...state, uploadFocus: null };
+    case "HYDRATE": {
+      const byType = (t: FileInputType) => action.files.filter((f) => f.type === t);
+      const pdFiles = byType("PD");
+      const lgdFile = byType("LGD")[0] ?? null;
+      const eadFile = byType("EAD")[0] ?? null;
+      // Resume on the first file that still needs attention.
+      const dataFile: FileInputType = !pdFiles.length ? "PD" : !lgdFile ? "LGD" : "EAD";
+      return { ...state, pdFiles, lgdFile, eadFile, combinePdFiles: action.combinePdFiles, dataFile };
+    }
+
+    case "SET_HYDRATING":
+      return { ...state, hydrating: action.value };
 
     default:
       return state;
@@ -257,17 +276,6 @@ export function pdFilesReady(state: NewRunState): boolean {
   return state.pdFiles.some((f) => fileIsReady(f));
 }
 
-export function nextMissingPairFile(state: NewRunState): "LGD" | "EAD" | null {
-  if (!fileIsReady(state.lgdFile)) return "LGD";
-  if (!fileIsReady(state.eadFile)) return "EAD";
-  return null;
-}
-
-export function canReturnToValidate(state: NewRunState): boolean {
-  if (!pdFilesReady(state)) return false;
-  return state.prevStep === "validate" || state.pdPreviewStatus !== "idle";
-}
-
 /** One component's gate: validated, nothing blocking, review items accepted. */
 export function stepCleared(
   status: "ok" | "warn" | "blocking" | undefined,
@@ -288,31 +296,30 @@ export function eadCleared(state: NewRunState): boolean {
   return state.eadStatus === "ready" && stepCleared(state.eadValidation?.status, state.reviewAccepted.EAD);
 }
 
+export function fileCleared(state: NewRunState, kind: FileInputType): boolean {
+  return kind === "PD" ? pdCleared(state) : kind === "LGD" ? lgdCleared(state) : eadCleared(state);
+}
+
+/** Furthest file the user may open: every earlier one must be cleared. */
+export function canOpenFile(state: NewRunState, kind: FileInputType): boolean {
+  if (kind === "PD") return true;
+  if (kind === "LGD") return pdCleared(state);
+  return pdCleared(state) && lgdCleared(state);
+}
+
 export function canContinueFrom(state: NewRunState): boolean {
-  if (state.step === "upload") return pdFilesReady(state);
-  if (state.step === "validate") return pdCleared(state) && lgdCleared(state) && eadCleared(state);
+  if (state.step === "data") return fileCleared(state, state.dataFile);
   return true;
 }
 
 export function getFooterHint(state: NewRunState): string {
-  if (state.step === "upload") {
-    return pdFilesReady(state) ? "Continue to validate PD" : "Upload a PD workbook first";
-  }
-  if (state.step === "validate") {
-    const steps: [string, NewRunState["pdPreviewStatus"], boolean, boolean][] = [
-      ["PD", state.pdPreviewStatus, pdCleared(state), !!state.pdFiles.length],
-      ["LGD", state.lgdStatus, lgdCleared(state), !!state.lgdFile],
-      ["EAD", state.eadStatus, eadCleared(state), !!state.eadFile],
-    ];
-    for (const [kind, status, cleared, uploaded] of steps) {
-      if (cleared) continue;
-      if (!uploaded) return `Upload ${kind} to continue`;
-      if (status === "loading") return `Validating ${kind}…`;
-      if (status === "blocked") return `Fix the blocking ${kind} checks and re-upload`;
-      if (status === "error") return `Retry ${kind} validation`;
-      if (status === "ready") return `Review and accept the ${kind} review items`;
-      return `Validate ${kind} to continue`;
-    }
-  }
-  return "Complete this step to continue";
+  if (state.step !== "data") return "Complete this step to continue";
+  const kind = state.dataFile;
+  const uploaded = kind === "PD" ? state.pdFiles.length > 0 : !!(kind === "LGD" ? state.lgdFile : state.eadFile);
+  const status = kind === "PD" ? state.pdPreviewStatus : kind === "LGD" ? state.lgdStatus : state.eadStatus;
+  if (!uploaded) return `Upload the ${kind} file to continue`;
+  if (status === "loading" || status === "idle") return `Checking the ${kind} file…`;
+  if (status === "blocked") return `Fix the blocking ${kind} checks and replace the file`;
+  if (status === "error") return `Retry the ${kind} check`;
+  return `Tick "I have reviewed" to accept the ${kind} review items`;
 }

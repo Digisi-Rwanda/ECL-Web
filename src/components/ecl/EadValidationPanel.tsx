@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { Checklist } from "./Checklist";
+import { PanelTabs } from "./PanelTabs";
 import { ReconciliationList, SummaryTable } from "./EclSummaryTables";
 import { ExceptionsTable } from "./ExceptionsTable";
 import { PagedTable } from "./PagedTable";
@@ -20,13 +21,6 @@ const LOAN_STEPS = [
 ] as const;
 type LoanStep = (typeof LOAN_STEPS)[number]["id"];
 
-const VIEWS = [
-  { id: "portfolio", label: "Portfolio" },
-  { id: "reconciliation", label: "Reconciliation" },
-  { id: "exceptions", label: "Exception Report" },
-  { id: "excluded", label: "Excluded loans" },
-] as const;
-type View = (typeof VIEWS)[number]["id"];
 
 const TREATMENT_RULE: Record<string, string> = {
   "Stage 1 · 12 months": "Stage 1: the Reporting Date row plus 12 monthly rows (stopping at the Adjusted Maturity Date). The Reporting Date row carries no PD, so exactly 12 months of default risk.",
@@ -167,7 +161,6 @@ function LoanSteps({ loan, rows }: { loan: EadLoan; rows: Row[] }) {
 export function EadValidationPanel({ result, onDownload }: { result: EadValidationResult; onDownload?: () => Promise<void> }) {
   const preview = result.preview;
   const [selected, setSelected] = useState<string | null>(null);
-  const [view, setView] = useState<View>("portfolio");
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
@@ -203,10 +196,17 @@ export function EadValidationPanel({ result, onDownload }: { result: EadValidati
     }
   }
 
+  const exceptionTotal = Object.values(preview.exceptionCounts).reduce((a, b) => a + b, 0);
+  const reconPassed = preview.reconciliation.filter((c) => c.passed).length;
   return (
     <div>
-      <Checklist criteria={result.criteria} businessSubtitle="Spec 1.5 and 12.1 · EA-11–EA-18, R-1–R-7" />
-
+      <PanelTabs
+        tabs={[
+          {
+            id: "preview",
+            label: "ECL preview",
+            content: (
+              <>
       <div className="between ecl-preview-head">
         <h3 className="ecl-h3" style={{ margin: 0 }}>
           ECL preview · Reporting Date {preview.reportingDate ?? "—"}
@@ -242,45 +242,24 @@ export function EadValidationPanel({ result, onDownload }: { result: EadValidati
         </div>
       </div>
 
-      <div className="tabs" role="tablist" aria-label="ECL preview view">
-        {VIEWS.map((v) => (
-          <button key={v.id} type="button" role="tab" className="tab" aria-selected={view === v.id} onClick={() => setView(v.id)}>
-            {v.label}
-            {v.id === "exceptions" ? ` (${Object.values(preview.exceptionCounts).reduce((a, b) => a + b, 0)})` : ""}
-            {v.id === "reconciliation" ? ` (${preview.reconciliation.filter((c) => c.passed).length}/${preview.reconciliation.length})` : ""}
-          </button>
-        ))}
-      </div>
-      <div style={{ paddingTop: "var(--sp-4)" }} role="tabpanel">
-        {view === "portfolio" && (
-          <div className="ecl-two">
-            <SummaryTable title="Stage summary" keyLabel="Stage" rows={preview.stageSummary} />
-            <SummaryTable title="Segment summary" keyLabel="Segment" rows={preview.segmentSummary} />
-          </div>
-        )}
-        {view === "reconciliation" && <ReconciliationList checks={preview.reconciliation} />}
-        {view === "exceptions" && (
-          <ExceptionsTable
-            items={preview.exceptions}
-            total={Object.values(preview.exceptionCounts).reduce((a, b) => a + b, 0)}
-          />
-        )}
-        {view === "excluded" && (
-          <PagedTable
-            label="Excluded loans"
-            rows={preview.excluded}
-            rowKey={(_, i) => String(i)}
-            columns={[
-              { key: "l", label: "Loan ID", render: (e) => <span className="mono">{e.loanId || "—"}</span> },
-              { key: "c", label: "Customer ID", render: (e) => e.customerId || "—" },
-              { key: "o", label: "Outstanding", num: true, render: (e) => fmtMoney(e.outstanding) },
-              { key: "r", label: "Reason", render: (e) => e.reason },
-            ]}
-          />
-        )}
-      </div>
-
-      <h3 className="ecl-h3">Loans · select one to walk through Steps 3–10</h3>
+                <div className="ecl-two" style={{ marginTop: "var(--sp-4)" }}>
+                  <SummaryTable title="Stage summary" keyLabel="Stage" rows={preview.stageSummary} />
+                  <SummaryTable title="Segment summary" keyLabel="Segment" rows={preview.segmentSummary} />
+                </div>
+              </>
+            ),
+          },
+          {
+            id: "checks",
+            label: "Checks",
+            content: <Checklist criteria={result.criteria} businessSubtitle="Spec 1.5 and 12.1 · EA-11–EA-18, R-1–R-7" />,
+          },
+          {
+            id: "loans",
+            label: "Loans & Steps 3–10",
+            content: (
+              <>
+                <p className="pdts-muted" style={{ margin: "0 0 8px" }}>Select a loan to walk through its exposure, PD and loss.</p>
       <PagedTable
         label="EAD loans"
         rows={preview.loans}
@@ -315,6 +294,41 @@ export function EadValidationPanel({ result, onDownload }: { result: EadValidati
           Row detail for {loan.loanId} is not in the preview (row budget reached); download the Loan Detail preview to see it.
         </p>
       ) : null}
+              </>
+            ),
+          },
+          {
+            id: "reconciliation",
+            label: "Reconciliation",
+            badge: `${reconPassed}/${preview.reconciliation.length}`,
+            content: <ReconciliationList checks={preview.reconciliation} />,
+          },
+          {
+            id: "exceptions",
+            label: "Exceptions",
+            badge: exceptionTotal || "",
+            content: <ExceptionsTable items={preview.exceptions} total={exceptionTotal} />,
+          },
+          {
+            id: "excluded",
+            label: "Excluded",
+            badge: preview.excluded.length || "",
+            content: preview.excluded.length ? (
+          <PagedTable
+            label="Excluded loans"
+            rows={preview.excluded}
+            rowKey={(_, i) => String(i)}
+            columns={[
+              { key: "l", label: "Loan ID", render: (e) => <span className="mono">{e.loanId || "—"}</span> },
+              { key: "c", label: "Customer ID", render: (e) => e.customerId || "—" },
+              { key: "o", label: "Outstanding", num: true, render: (e) => fmtMoney(e.outstanding) },
+              { key: "r", label: "Reason", render: (e) => e.reason },
+            ]}
+          />
+            ) : null,
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -33,6 +33,8 @@ export type RunListItem = z.infer<typeof RunListItemSchema>;
 // ── Input file ────────────────────────────────────────────────────────────
 
 export const RunInputFileSchema = z.object({
+  uploadId: z.string().optional(),
+  warningsAccepted: z.boolean().optional(),
   type: z.enum(["PD", "LGD", "EAD"]),
   name: z.string(),
   size: z.string(),    // "2.4 MB"

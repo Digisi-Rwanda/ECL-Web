@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Info } from "lucide-react";
 import { Checklist } from "./Checklist";
+import { PanelTabs } from "./PanelTabs";
 import { ExceptionsTable } from "./ExceptionsTable";
 import { PagedTable } from "./PagedTable";
 import { fmtMoney, fmtNum, fmtPct } from "./format";
@@ -135,10 +136,7 @@ export function LgdValidationPanel({ result }: { result: LgdValidationResult }) 
   const loan = loans.find((l) => l.loanId === selected) ?? loans[0];
   return (
     <div>
-      <Checklist criteria={result.criteria} businessSubtitle="Spec 1.5 · LG-11–LG-16" />
-      {preview && (
-        <>
-          {preview.provisional && (
+          {preview?.provisional && (
             <div className="callout callout-info" style={{ marginTop: "var(--sp-3)" }}>
               <Info size={15} className="ic" aria-hidden="true" />
               <span>
@@ -147,7 +145,18 @@ export function LgdValidationPanel({ result }: { result: LgdValidationResult }) 
               </span>
             </div>
           )}
-          <h3 className="ecl-h3">Collateral parameters</h3>
+      <PanelTabs
+        tabs={[
+          {
+            id: "checks",
+            label: "Checks",
+            content: <Checklist criteria={result.criteria} businessSubtitle="Spec 1.5 · LG-11–LG-16" />,
+          },
+          {
+            id: "parameters",
+            label: "Collateral parameters",
+            content: preview ? (
+              <>
           <PagedTable
             label="Collateral parameters"
             rows={preview.parameters}
@@ -165,7 +174,15 @@ export function LgdValidationPanel({ result }: { result: LgdValidationResult }) 
               },
             ]}
           />
-          <h3 className="ecl-h3">Loans · select one to walk through Step 1</h3>
+              </>
+            ) : null,
+          },
+          {
+            id: "loans",
+            label: "Loans & Step 1",
+            content: preview ? (
+              <>
+                <p className="pdts-muted" style={{ margin: "0 0 8px" }}>Select a loan to walk through its discounted collateral.</p>
           <PagedTable
             label="LGD loans"
             rows={loans}
@@ -183,10 +200,17 @@ export function LgdValidationPanel({ result }: { result: LgdValidationResult }) 
             ]}
           />
           {loan && <LgdSteps key={loan.loanId} loan={loan} loans={loans} result={result} />}
-          <h3 className="ecl-h3">Collateral exceptions</h3>
-          <ExceptionsTable items={preview.exceptions} total={preview.exceptionCount} />
-        </>
-      )}
+              </>
+            ) : null,
+          },
+          {
+            id: "exceptions",
+            label: "Exceptions",
+            badge: preview?.exceptionCount || "",
+            content: preview ? <ExceptionsTable items={preview.exceptions} total={preview.exceptionCount} /> : null,
+          },
+        ]}
+      />
     </div>
   );
 }

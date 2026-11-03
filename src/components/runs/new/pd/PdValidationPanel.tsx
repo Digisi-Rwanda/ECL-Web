@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Hash, Info, Search } from "lucide-react";
+import { Hash, Search } from "lucide-react";
 import { PdTermStructureCard } from "@/components/pd/PdTermStructureCard";
 import { useApiSession } from "@/hooks/use-api-session";
 import { downloadPdExport } from "@/lib/api/runs";
 import { useRunWizard } from "../RunWizardContext";
 import { CriteriaGroup } from "./CriteriaGroup";
+import { PanelTabs } from "@/components/ecl/PanelTabs";
 import { CriteriaRow } from "./CriteriaRow";
 import { PdLoanPreviewTable, PD_LOAN_PAGE_SIZE } from "./PdLoanPreviewTable";
 import { PdLoanStagingDetail } from "./PdLoanStagingDetail";
@@ -125,6 +126,32 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
 
   return (
     <div>
+      {segments.length > 1 && (
+        <div className="pd-seg-row">
+          <span className="t-caption">Segment</span>
+          <div className="pdts-chips" role="group" aria-label="Segment">
+            {segments.map((name) => (
+              <button
+                key={name}
+                type="button"
+                className="pdts-chip"
+                aria-pressed={activeSegment === name}
+                onClick={() => handleSegment(name)}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <PanelTabs
+        tabs={[
+          {
+            id: "checks",
+            label: "Checks",
+            badge: structuralCounts.blocked + businessCounts.blocked || businessCounts.review || "",
+            content: (
+              <>
       <CriteriaGroup
         title="Format & completeness checks"
         subtitle={`${structural.length} checks`}
@@ -160,6 +187,14 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
         </div>
       )}
 
+              </>
+            ),
+          },
+          {
+            id: "loans",
+            label: "Loans",
+            content: preview.loans.length > 0 ? (
+              <>
       {preview.loans.length > 0 && selectedLoanId && selectedIndex >= 0 ? (
         <div style={{ marginTop: "var(--sp-6)" }}>
           <PdLoanStagingDetail
@@ -194,20 +229,6 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
               matrices, cure rate and PD curve.
             </p>
           )}
-          <div className="tabs" role="tablist" aria-label="Segment">
-            {segments.map((name) => (
-              <button
-                key={name}
-                type="button"
-                className="tab"
-                role="tab"
-                aria-selected={activeSegment === name}
-                onClick={() => handleSegment(name)}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
           <div className="rx-toolbar-mini">
             <div className="input-wrap search">
               <Search className="ic" size={16} aria-hidden="true" />
@@ -238,6 +259,14 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
         </>
       ) : null}
 
+              </>
+            ) : null,
+          },
+          {
+            id: "term",
+            label: "PD term structure",
+            content: preview.loans.length > 0 && activePreview ? (
+              <>
       {preview.loans.length > 0 && activePreview && (
         <div style={{ marginTop: "var(--sp-4)" }}>
           <PdTermStructureCard
@@ -252,13 +281,11 @@ export function PdValidationPanel({ preview }: PdValidationPanelProps) {
           />
         </div>
       )}
-
-      <div className="preview-note">
-        <Info className="ic" size={14} aria-hidden="true" />
-        <span>
-          Preview only — nothing is saved until you confirm and compute the run.
-        </span>
-      </div>
+              </>
+            ) : null,
+          },
+        ]}
+      />
     </div>
   );
 }

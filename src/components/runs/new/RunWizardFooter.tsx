@@ -6,6 +6,7 @@ interface RunWizardFooterProps {
   currentStep: NewRunStep;
   canContinue: boolean;
   continueHint: string;
+  nextLabel: string;
   onBack: () => void;
   onCancel: () => void;
   onNext: () => void;
@@ -13,25 +14,20 @@ interface RunWizardFooterProps {
   backLabel?: string;
 }
 
-const NEXT_LABELS: Partial<Record<NewRunStep, string>> = {
-  upload: "Continue to validation",
-  validate: "Continue to confirm",
-  confirm: "Start computation",
-};
 
 export function RunWizardFooter({
   currentStep,
   canContinue,
   continueHint,
+  nextLabel,
   onBack,
   onCancel,
   onNext,
   showBack,
   backLabel = "Back",
 }: RunWizardFooterProps) {
-  const isConfirm = currentStep === "confirm";
-  const nextLabel = NEXT_LABELS[currentStep] ?? "Continue";
-  const canGoBack = showBack ?? currentStep !== "upload";
+  const isConfirm = currentStep === "review";
+  const canGoBack = showBack ?? false;
 
   const btnBase: React.CSSProperties = {
     display: "inline-flex", alignItems: "center", gap: 6,
