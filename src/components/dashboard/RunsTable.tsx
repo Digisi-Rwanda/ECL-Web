@@ -60,7 +60,7 @@ export function RunsTable({ runs }: RunsTableProps) {
       <div className="runs-head">
         <h2>Recent runs</h2>
         <Link
-          href="/runs"
+          href="/ecl/runs"
           className="link-accent"
           style={{ fontSize: "var(--fs-body)" }}
         >
@@ -101,7 +101,7 @@ export function RunsTable({ runs }: RunsTableProps) {
               runs.map((run) => (
                 <tr
                   key={run.id}
-                  onClick={() => router.push(`/runs/${run.fullId}`)}
+                  onClick={() => router.push(`/ecl/runs/${run.fullId}`)}
                 >
                   <td>
                     <span className="run-id">
@@ -130,7 +130,7 @@ export function RunsTable({ runs }: RunsTableProps) {
                   </td>
                   <td>
                     <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/runs/${run.fullId}`); }}
+                      onClick={(e) => { e.stopPropagation(); router.push(`/ecl/runs/${run.fullId}`); }}
                       style={{
                         width: 32,
                         height: 32,

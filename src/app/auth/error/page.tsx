@@ -7,7 +7,7 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Link expired — ECL Platform",
+  title: "Link expired — Ledgerline",
 };
 
 interface Props {

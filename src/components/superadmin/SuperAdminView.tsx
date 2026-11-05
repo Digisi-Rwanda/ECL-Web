@@ -329,7 +329,7 @@ export function SuperAdminView() {
         <div>
           <h1>Platform console</h1>
           <div className="ph-sub">
-            <span>ECL Platform</span>
+            <span>Ledgerline</span>
             <span style={{ color: "var(--text-subtle)" }}>·</span>
             <span>Operator view · all tenants</span>
           </div>

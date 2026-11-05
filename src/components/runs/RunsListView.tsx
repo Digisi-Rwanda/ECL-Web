@@ -71,7 +71,7 @@ export function RunsListView({
         {canCreateRun && (
         <div className="ph-actions">
           <Link
-            href="/runs/new"
+            href="/ecl/runs/new"
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
               height: "var(--control-h)", padding: "0 14px",

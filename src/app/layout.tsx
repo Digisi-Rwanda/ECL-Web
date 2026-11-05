@@ -5,9 +5,9 @@ import { fontVariables } from "@/lib/fonts";
 import { ServiceWorkerCleanup } from "@/components/shared/ServiceWorkerCleanup";
 
 export const metadata: Metadata = {
-  title: "ECL Platform — IFRS 9 Expected Credit Loss",
+  title: "Ledgerline — IFRS 9 credit loss & IFRS 16 lease accounting",
   description:
-    "Deterministic, auditable IFRS 9 Expected Credit Loss calculations for mid-tier banks and MFIs. Upload, compute, and reconcile in under 5 minutes.",
+    "Deterministic, auditable IFRS 9 expected credit loss and IFRS 16 lease accounting. Upload, compute, approve and reconcile in one workspace.",
 };
 
 export default function RootLayout({

@@ -47,7 +47,7 @@ export function SignUpForm() {
         Create your workspace
       </h2>
       <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>
-        Set up ECL Platform for your institution.
+        Set up Ledgerline for your institution.
       </p>
 
       <form action={action} className="flex flex-col gap-4 mt-6">

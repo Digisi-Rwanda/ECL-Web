@@ -32,7 +32,7 @@ const sections = [
   {
     id: "compliance",
     title: "Compliance",
-    content: `ECL Platform is designed for IFRS 9 compliance. Our SOC 2 Type II assessment is in progress. Contact us for our latest penetration test executive summary and current compliance status. We are aligned with OWASP Top 10 mitigations and conduct annual third-party security reviews.`,
+    content: `Ledgerline is designed for IFRS 9 and IFRS 16 compliance. Our SOC 2 Type II assessment is in progress. Contact us for our latest penetration test executive summary and current compliance status. We are aligned with OWASP Top 10 mitigations and conduct annual third-party security reviews.`,
   },
   {
     id: "incident",

@@ -137,7 +137,7 @@ export function SecuritySection({ token, onToast }: SecuritySectionProps) {
             </label>
           </div>
           <p style={{ marginTop: 12, fontSize: "var(--fs-caption)", color: "var(--text-subtle)", lineHeight: 1.5 }}>
-            ECL Platform uses email + password sign-in. There's no social login (Google/GitHub); Enterprise tenants can enable SAML/OIDC single sign-on.
+            Ledgerline uses email + password sign-in. There's no social login (Google/GitHub); Enterprise tenants can enable SAML/OIDC single sign-on.
           </p>
         </div>
       </div>

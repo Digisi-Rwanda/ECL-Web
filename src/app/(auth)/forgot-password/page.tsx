@@ -4,7 +4,7 @@ import { AuthLogo } from "@/components/auth/AuthLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Reset password — ECL Platform",
+  title: "Reset password — Ledgerline",
 };
 
 export default function ForgotPasswordPage() {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { DashboardLoader } from "@/components/dashboard/DashboardLoader";
 
 export const metadata: Metadata = {
-  title: "Dashboard — ECL Platform",
+  title: "Home — Ledgerline",
 };
 
 export default function DashboardPage() {

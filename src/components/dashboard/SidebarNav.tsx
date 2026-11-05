@@ -2,156 +2,62 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  Home,
-  Activity,
-  BarChart3,
-  Shield,
-  Settings,
-  Terminal,
-} from "lucide-react";
 import { useApiSession } from "@/hooks/use-api-session";
+import { moduleForPath, activeHref, type ModuleDef } from "@/components/shell/modules";
+import { useModuleBadges } from "@/components/shell/use-module-badges";
 import { cn } from "@/lib/utils";
-
-const PRIMARY_NAV = [
-  { href: "/dashboard", icon: Home, label: "Home" },
-  { href: "/runs", icon: Activity, label: "Runs" },
-  { href: "/results", icon: BarChart3, label: "Results" },
-];
-
-const MANAGE_NAV = [
-  { href: "/admin",    icon: Shield,    label: "Admin"    },
-  { href: "/settings", icon: Settings,  label: "Settings" },
-  { href: "/platform", icon: Terminal,  label: "Platform" },
-];
 
 interface SidebarNavProps {
   isCollapsed?: boolean;
   onLinkClick?: () => void;
+  /** override the module (mobile drawer switcher) */
+  module?: ModuleDef;
 }
 
-export function SidebarNav({ isCollapsed = false, onLinkClick }: SidebarNavProps) {
+/** Context sidebar: the nav of whichever module the rail has selected. */
+export function SidebarNav({ isCollapsed = false, onLinkClick, module }: SidebarNavProps) {
   const pathname = usePathname();
-  const { isPlatformAdmin } = useApiSession();
-  const manageNav = MANAGE_NAV.filter((item) => {
-    if (item.href === "/platform") return isPlatformAdmin;
-    return true;
-  });
-
-  function NavLink({
-    href,
-    icon: Icon,
-    label,
-    badge,
-  }: {
-    href: string;
-    icon: React.ElementType;
-    label: string;
-    badge?: number;
-  }) {
-    const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-
-    return (
-      <Link
-        href={href}
-        onClick={onLinkClick}
-        className={cn("side-link", isActive && "active")}
-        aria-current={isActive ? "page" : undefined}
-        title={isCollapsed ? label : undefined}
-      >
-        {/* Active left stripe */}
-        {isActive && (
-          <span
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 8,
-              bottom: 8,
-              width: 2,
-              background: "var(--accent)",
-              borderRadius: 2,
-            }}
-          />
-        )}
-
-        <Icon size={16} style={{ flexShrink: 0 }} />
-
-        <AnimatePresence initial={false}>
-          {!isCollapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.15, ease: "easeInOut" }}
-              style={{ overflow: "hidden", whiteSpace: "nowrap" }}
-            >
-              {label}
-            </motion.span>
-          )}
-        </AnimatePresence>
-
-        {!isCollapsed && badge !== undefined && (
-          <span
-            className="side-badge"
-            style={{
-              background: "var(--accent-subtle)",
-              color: "var(--accent)",
-              borderRadius: "var(--r-full)",
-              fontSize: "var(--fs-micro)",
-              fontFamily: "var(--font-mono)",
-              fontWeight: "var(--fw-semibold)",
-              padding: "1px 6px",
-              minWidth: 18,
-              textAlign: "center",
-            }}
-          >
-            {badge}
-          </span>
-        )}
-      </Link>
-    );
-  }
+  const mod = module ?? moduleForPath(pathname);
+  const { role } = useApiSession();
+  const badges = useModuleBadges(mod.id);
+  const active = activeHref(mod, pathname);
 
   return (
-    <nav
-      className="flex flex-col gap-0.5 mt-1"
-      aria-label="Primary navigation"
-    >
-      {PRIMARY_NAV.map((item) => (
-        <NavLink key={item.href} {...item} />
-      ))}
-
-      {/* Section label */}
-      <AnimatePresence initial={false}>
-        {!isCollapsed && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.15 }}
-            style={{ overflow: "hidden" }}
-          >
-            <p
-              style={{
-                fontSize: "var(--fs-micro)",
-                color: "var(--text-subtle)",
-                padding: "14px 10px 4px",
-                letterSpacing: "var(--tracking-caps)",
-                textTransform: "uppercase",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              Manage
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {manageNav.map((item) => (
-        <NavLink key={item.href} {...item} />
-      ))}
+    <nav className="ctx-nav" aria-label={`${mod.name} navigation`}>
+      {mod.sections.map((section, i) => {
+        const items = section.items.filter((it) => !it.roles || !role || it.roles.includes(role as never));
+        if (!items.length) return null;
+        return (
+          <div key={section.title ?? i} className="ctx-section">
+            {section.title && !isCollapsed && <p className="ctx-title">{section.title}</p>}
+            {items.map((it) => {
+              const on = it.href === active;
+              const count = it.badge ? badges[it.badge] : undefined;
+              return (
+                <Link
+                  key={it.href}
+                  href={it.href}
+                  onClick={onLinkClick}
+                  className={cn("side-link", on && "active")}
+                  aria-current={on ? "page" : undefined}
+                  title={isCollapsed ? it.label : undefined}
+                >
+                  <it.icon size={16} style={{ flexShrink: 0 }} />
+                  {!isCollapsed && <span className="truncate">{it.label}</span>}
+                  {count && count.n > 0 && (
+                    <span
+                      className={cn("count-badge", count.tone === "action" && "action", isCollapsed && "collapsed")}
+                      aria-label={`${count.n} ${count.tone === "action" ? "need attention" : "items"}`}
+                    >
+                      {isCollapsed ? "" : count.n}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        );
+      })}
     </nav>
   );
 }

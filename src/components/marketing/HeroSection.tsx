@@ -115,7 +115,7 @@ export function HeroSection() {
               className="text-xs uppercase tracking-widest mb-3.5 font-medium"
               style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", letterSpacing: "0.18em" }}
             >
-              IFRS 9 · Expected Credit Loss
+              IFRS 9 · IFRS 16 · One ledger of record
             </p>
 
             <h1
@@ -128,7 +128,7 @@ export function HeroSection() {
                 color: "#fff",
               }}
             >
-              Your ECL,{" "}
+              Credit loss and leases,{" "}
               <em
                 style={{ fontStyle: "italic", color: "#B7A6FF" }}
               >
@@ -145,8 +145,8 @@ export function HeroSection() {
                 lineHeight: 1.6,
               }}
             >
-              Upload your loan schedules, compute stage-level ECL, and export
-              a deterministic audit trail — no spreadsheets, no guesswork.
+              Compute IFRS 9 expected credit loss and IFRS 16 lease schedules,
+              journals and disclosures — one deterministic audit trail, no spreadsheets.
             </p>
 
             {/* CTAs */}

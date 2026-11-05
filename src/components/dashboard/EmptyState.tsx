@@ -90,7 +90,7 @@ export function EmptyState() {
         {/* CTA */}
         {canCreateRun && (
           <Link
-            href="/runs/new"
+            href="/ecl/runs/new"
             style={{
               marginTop: 18,
               display: "inline-flex",

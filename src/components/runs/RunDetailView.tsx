@@ -28,7 +28,7 @@ export function RunDetailView({ run }: RunDetailViewProps) {
   // A draft is unfinished setup: it continues in the wizard (Runs list, Home, re-run all land here).
   const resumeDraft = run.status === "draft" && !!role && role !== "reviewer";
   useEffect(() => {
-    if (resumeDraft) router.replace(`/runs/new?run=${encodeURIComponent(run.fullId)}`);
+    if (resumeDraft) router.replace(`/ecl/runs/new?run=${encodeURIComponent(run.fullId)}`);
   }, [resumeDraft, run.fullId, router]);
 
   const liveQuery = useAuthedQuery(
@@ -56,14 +56,14 @@ export function RunDetailView({ run }: RunDetailViewProps) {
     if (action === "rerun") {
       try {
         const newRun = await rerunRun(token, tenantId, run.fullId);
-        router.push(`/runs/${newRun.fullId}`);
+        router.push(`/ecl/runs/${newRun.fullId}`);
       } catch {
         // non-fatal — user stays on current page
       }
     } else if (action === "delete") {
       try {
         await deleteRun(token, tenantId, run.fullId);
-        router.push("/runs");
+        router.push("/ecl/runs");
       } catch {
         // non-fatal — user stays on current page
       }

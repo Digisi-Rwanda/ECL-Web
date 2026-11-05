@@ -4,7 +4,7 @@ import { AuthLogo } from "@/components/auth/AuthLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Create workspace — ECL Platform",
+  title: "Create workspace — Ledgerline",
 };
 
 export default function SignUpPage() {

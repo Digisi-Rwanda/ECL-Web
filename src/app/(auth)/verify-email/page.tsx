@@ -4,7 +4,7 @@ import { AuthLogo } from "@/components/auth/AuthLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Verify email — ECL Platform",
+  title: "Verify email — Ledgerline",
 };
 
 export default async function VerifyEmailPage({

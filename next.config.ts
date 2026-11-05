@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
       static: 300,
     },
   },
+  async redirects() {
+    return [
+      { source: "/runs/:path*", destination: "/ecl/runs/:path*", permanent: true },
+      { source: "/runs", destination: "/ecl/runs", permanent: true },
+      { source: "/results", destination: "/ecl/results", permanent: true },
+      { source: "/ecl", destination: "/ecl/runs", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

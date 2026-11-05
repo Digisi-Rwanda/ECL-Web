@@ -71,7 +71,7 @@ export function ComparisonTable() {
             className="text-xs uppercase tracking-widest font-medium mb-3.5"
             style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", letterSpacing: "0.18em" }}
           >
-            Why ECL Platform
+            Why Ledgerline
           </p>
           <h2
             className="font-semibold"
@@ -102,13 +102,13 @@ export function ComparisonTable() {
                 >
                   Feature
                 </th>
-                {["Spreadsheets / Notebooks", "ECL Platform", "Enterprise Suites"].map((h) => (
+                {["Spreadsheets / Notebooks", "Ledgerline", "Enterprise Suites"].map((h) => (
                   <th
                     key={h}
                     className="p-3.5 text-center text-xs font-semibold uppercase tracking-wide"
                     style={{
-                      background: h === "ECL Platform" ? "var(--accent-subtle)" : "var(--surface-sunken)",
-                      color: h === "ECL Platform" ? "var(--accent)" : "var(--text-muted)",
+                      background: h === "Ledgerline" ? "var(--accent-subtle)" : "var(--surface-sunken)",
+                      color: h === "Ledgerline" ? "var(--accent)" : "var(--text-muted)",
                       border: "1px solid var(--border)",
                     }}
                   >

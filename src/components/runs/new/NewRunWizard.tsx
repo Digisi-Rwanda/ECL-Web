@@ -42,7 +42,7 @@ function ReviewerRedirect() {
   const router = useRouter();
   const { role, isLoading } = useApiSession();
   useEffect(() => {
-    if (!isLoading && role === "reviewer") router.replace("/runs");
+    if (!isLoading && role === "reviewer") router.replace("/ecl/runs");
   }, [role, isLoading, router]);
   return null;
 }
@@ -65,7 +65,7 @@ function useResume() {
         const run = mapRunDetail(raw);
         if (run.status !== "draft" && run.status !== "failed") {
           // Computed or computing: its page is the run detail, not the wizard.
-          router.replace(`/runs/${run.fullId}`);
+          router.replace(`/ecl/runs/${run.fullId}`);
           return;
         }
         dispatch({
@@ -93,7 +93,7 @@ function useResume() {
         if (file && DATA_FILES.includes(file)) dispatch({ type: "SET_DATA_FILE", kind: file });
         if (step === "review") dispatch({ type: "GO_TO_STEP", step: "review" });
       })
-      .catch(() => router.replace("/runs/new"))
+      .catch(() => router.replace("/ecl/runs/new"))
       .finally(() => dispatch({ type: "SET_HYDRATING", value: false }));
   }, [runParam, token, tenantId, state.runId, dispatch, params, router]);
 }
@@ -106,7 +106,7 @@ function useUrlSync() {
     if (!state.runId || state.hydrating || state.step === "compute" || state.step === "success") return;
     const qs = new URLSearchParams({ run: state.runId, step: state.step });
     if (state.step === "data") qs.set("file", state.dataFile);
-    const next = `/runs/new?${qs}`;
+    const next = `/ecl/runs/new?${qs}`;
     if (`${window.location.pathname}${window.location.search}` !== next) router.replace(next, { scroll: false });
   }, [state.runId, state.step, state.dataFile, state.hydrating, router]);
 }
@@ -127,7 +127,7 @@ function WizardInner() {
 
   // Compute finished: the result is the run's report.
   useEffect(() => {
-    if (step === "success" && state.runId) router.replace(`/results?run_id=${encodeURIComponent(state.runId)}`);
+    if (step === "success" && state.runId) router.replace(`/ecl/results?run_id=${encodeURIComponent(state.runId)}`);
   }, [step, state.runId, router]);
 
   // Each new screen starts at the top, with focus on its heading for screen readers.
@@ -175,7 +175,7 @@ function WizardInner() {
   function handleDiscard() {
     dispatch({ type: "CLOSE_CANCEL_MODAL" });
     if (state.runId && token && tenantId) deleteRun(token, tenantId, state.runId).catch(() => {});
-    router.push("/runs");
+    router.push("/ecl/runs");
   }
 
   const nextLabel =

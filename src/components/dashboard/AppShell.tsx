@@ -5,6 +5,7 @@ import { DashboardProvider } from "./DashboardContext";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { MobileDrawer } from "./MobileDrawer";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useDashboard } from "./DashboardContext";
 import type { AppShellUser, Tenant } from "@/lib/dashboard-types";
 
@@ -123,6 +124,7 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <DashboardProvider defaultTenant={tenant}>
+      <TooltipProvider delayDuration={300}>
       <ShellInner
         user={user}
         tenant={tenant}
@@ -130,6 +132,7 @@ export function AppShell({
       >
         {children}
       </ShellInner>
+      </TooltipProvider>
     </DashboardProvider>
   );
 }

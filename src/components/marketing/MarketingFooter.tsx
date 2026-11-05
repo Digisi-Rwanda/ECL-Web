@@ -38,7 +38,7 @@ export function MarketingFooter() {
               >
                 <Grid3X3 className="size-3.5" />
               </span>
-              <span>ECL Platform</span>
+              <span>Ledgerline</span>
             </div>
             <p className="text-sm max-w-[240px]" style={{ lineHeight: 1.6 }}>
               Deterministic IFRS 9 Expected Credit Loss calculations for
@@ -85,7 +85,7 @@ export function MarketingFooter() {
           className="flex items-center justify-between flex-wrap gap-3 mt-12 pt-6 text-xs"
           style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
         >
-          <span>© 2026 ECL Platform. All rights reserved.</span>
+          <span>© 2026 Ledgerline. All rights reserved.</span>
           <span style={{ color: "rgba(236,237,245,0.4)" }}>
             Engine v1.3.0 · IFRS 9 (IFRS 9:2014)
           </span>

@@ -5,36 +5,36 @@ import { motion } from "framer-motion";
 
 const modules = [
   {
-    tag: "PD ENGINE",
-    title: "Probability of Default",
-    desc: "Cohort-based and individual PD curves with vintage analysis. Supports through-the-cycle and point-in-time adjustments.",
+    tag: "CREDIT LOSS · IFRS 9",
+    title: "Expected Credit Loss",
+    desc: "PD, LGD and EAD engines combine into one stage-level ECL figure for banks and MFIs, with a reproducible run for every reporting date.",
     features: [
-      "Stage 1/2/3 classification logic",
-      "Significant increase in credit risk (SICR) thresholds",
-      "Forward-looking macro overlay (Phase 2)",
-      "Vintage curve fitting",
+      "Stage 1/2/3 classification and SICR",
+      "Collateral-aware LGD with haircuts",
+      "EAD with credit conversion factors",
+      "Loan, segment and portfolio results",
     ],
   },
   {
-    tag: "LGD ENGINE",
-    title: "Loss Given Default",
-    desc: "Collateral-aware LGD with recovery waterfall modelling. Handles secured, unsecured, and mixed portfolios.",
+    tag: "LEASES · IFRS 16",
+    title: "Lease Accounting",
+    desc: "A lease register with dated cash flows, liability and right-of-use schedules, and remeasurements that never overwrite history.",
     features: [
-      "Collateral type registry",
-      "Haircut & forced-sale discount tables",
-      "Recovery rate curves by segment",
-      "Historical backtesting view",
+      "Present value on actual payment dates",
+      "CPI, term changes, modifications, terminations",
+      "Balanced journals for every event",
+      "Maturity analysis and roll-forwards",
     ],
   },
   {
-    tag: "EAD ENGINE",
-    title: "Exposure at Default & Staging",
-    desc: "EAD computation with credit conversion factors for off-balance sheet items. Full IFRS 9 three-stage classification.",
+    tag: "CLOSE & AUDIT",
+    title: "Controls built in",
+    desc: "Every number traces back to an approved version, its inputs and the person who approved it, across every module.",
     features: [
-      "CCF for undrawn commitments",
-      "Stage 1 / 2 / 3 / Off-books labels",
-      "Loan-level EAD decomposition",
-      "Export to regulatory templates",
+      "Maker-checker approvals",
+      "Period close with lock and reopen log",
+      "Immutable audit log and CSV export",
+      "Tenant-isolated workspaces",
     ],
   },
 ];
@@ -61,7 +61,7 @@ export function ModulesSection() {
             className="text-xs uppercase tracking-widest font-medium mb-3.5 mx-auto"
             style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", letterSpacing: "0.18em" }}
           >
-            The Engine
+            The Modules
           </p>
           <h2
             className="font-semibold mx-auto"
@@ -73,13 +73,13 @@ export function ModulesSection() {
               color: "var(--text)",
             }}
           >
-            Three modules. One deterministic result.
+            Two standards. One ledger of record.
           </h2>
           <p
             className="mt-3 mx-auto max-w-[52ch]"
             style={{ color: "var(--text-muted)", fontSize: "var(--fs-h3)" }}
           >
-            Each module runs independently and combines into a single auditable ECL figure.
+            Each module runs on its own, sharing one workspace, one approval model and one audit trail.
           </p>
         </motion.div>
 

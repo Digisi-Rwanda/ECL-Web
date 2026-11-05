@@ -5,7 +5,7 @@ import { AuthLogo } from "@/components/auth/AuthLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Accept invite — ECL Platform",
+  title: "Accept invite — Ledgerline",
 };
 
 interface Props {
@@ -24,7 +24,7 @@ export default async function InvitePage({ searchParams }: Props) {
       <AuthLogo />
       <InviteForm
         token={params.token}
-        orgName={params.org ?? "ECL Platform"}
+        orgName={params.org ?? "Ledgerline"}
         inviterName={params.inviter ?? "your administrator"}
       />
     </AuthLayout>

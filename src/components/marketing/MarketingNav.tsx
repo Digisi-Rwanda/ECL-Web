@@ -61,7 +61,7 @@ export function MarketingNav() {
             >
               <Grid3X3 className="size-3.5" />
             </span>
-            <span>ECL Platform</span>
+            <span>Ledgerline</span>
           </Link>
 
           {/* Nav links — hidden on mobile */}

@@ -106,7 +106,7 @@ export function RunsListTable({
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15, delay: i * 0.03 }}
-                  onClick={() => router.push(`/runs/${run.fullId}`)}
+                  onClick={() => router.push(`/ecl/runs/${run.fullId}`)}
                   style={{ opacity: run.status === "deleted" ? 0.6 : 1 }}
                 >
                   <td><CopyId id={run.id} /></td>
@@ -126,7 +126,7 @@ export function RunsListTable({
                   <td>
                     <div className="row-actions">
                       <button
-                        onClick={(e) => { e.stopPropagation(); router.push(`/runs/${run.fullId}`); }}
+                        onClick={(e) => { e.stopPropagation(); router.push(`/ecl/runs/${run.fullId}`); }}
                         style={{ width: 30, height: 30, border: 0, background: "none", color: "var(--text-subtle)", display: "grid", placeItems: "center", borderRadius: "var(--r-sm)", cursor: "pointer" }}
                         aria-label="View run"
                       >

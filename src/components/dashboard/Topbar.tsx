@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { moduleForPath } from "@/components/shell/modules";
 import { Menu, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useApiSession } from "@/hooks/use-api-session";
@@ -33,7 +34,11 @@ export function Topbar({
   const { role, token } = useApiSession();
   const { update } = useSession();
   const router = useRouter();
-  const canCreateRun = role !== "reviewer";
+  const mod = moduleForPath(usePathname());
+  const create =
+    role === "reviewer" ? null
+    : mod.id === "leases" ? { href: "/leases/new", label: "New lease" }
+    : { href: "/ecl/runs/new", label: "New run" };
 
   useEffect(() => {
     setActiveTenant(tenant);
@@ -103,9 +108,9 @@ export function Topbar({
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {canCreateRun && (
+        {create && (
           <Link
-            href="/runs/new"
+            href={create.href}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -126,7 +131,7 @@ export function Topbar({
             }}
           >
             <Plus size={16} />
-            <span className="hidden sm:inline">New Run</span>
+            <span className="hidden sm:inline">{create.label}</span>
           </Link>
         )}
 

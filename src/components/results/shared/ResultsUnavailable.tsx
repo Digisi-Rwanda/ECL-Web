@@ -87,13 +87,13 @@ export function ResultsUnavailable({ error, runId, run, isLoading }: ResultsUnav
 
       <div className="rx-unavailable-actions">
         {runId && (
-          <Link href={`/runs/${runId}`} className="rx-unavailable-link">
+          <Link href={`/ecl/runs/${runId}`} className="rx-unavailable-link">
             View run details
             <ArrowRight size={14} />
           </Link>
         )}
         {run?.status !== "success" && (
-          <Link href="/runs/new" className="rx-unavailable-link secondary">
+          <Link href="/ecl/runs/new" className="rx-unavailable-link secondary">
             Start a new run
             <ArrowRight size={14} />
           </Link>

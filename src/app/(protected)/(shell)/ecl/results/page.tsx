@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ResultsExplorer } from "@/components/results/ResultsExplorer";
 
 export const metadata: Metadata = {
-  title: "Results — ECL Platform",
+  title: "Results — Credit Loss — Ledgerline",
 };
 
 interface ResultsPageProps {

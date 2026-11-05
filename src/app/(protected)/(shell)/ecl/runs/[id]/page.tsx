@@ -7,7 +7,7 @@ interface RunDetailPageProps {
 
 export async function generateMetadata({ params }: RunDetailPageProps): Promise<Metadata> {
   const { id } = await params;
-  return { title: `Run ${id.slice(0, 8)} — Runs — ECL Platform` };
+  return { title: `Run ${id.slice(0, 8)} — Runs — Credit Loss — Ledgerline` };
 }
 
 export default async function RunDetailPage({ params }: RunDetailPageProps) {

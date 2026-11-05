@@ -60,7 +60,7 @@ export function OverviewTab({ run }: OverviewTabProps) {
       {/* CTA */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
         <button
-          onClick={() => router.push(`/results?run_id=${run.fullId}`)}
+          onClick={() => router.push(`/ecl/results?run_id=${run.fullId}`)}
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
             height: "var(--control-h)", padding: "0 14px",

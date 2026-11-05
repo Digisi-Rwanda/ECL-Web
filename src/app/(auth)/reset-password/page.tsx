@@ -5,7 +5,7 @@ import { AuthLogo } from "@/components/auth/AuthLogo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Set new password — ECL Platform",
+  title: "Set new password — Ledgerline",
 };
 
 interface Props {

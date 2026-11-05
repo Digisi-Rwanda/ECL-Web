@@ -14,7 +14,7 @@ export function AuthLogo() {
       >
         <Grid3X3 className="size-4" />
       </span>
-      <span>ECL Platform</span>
+      <span>Ledgerline</span>
     </Link>
   );
 }

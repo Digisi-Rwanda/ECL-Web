@@ -189,7 +189,7 @@ function ActionButtons({
       <>
         <DownloadMenu runFullId={runFullId} engineVersion={engineVersion} workbooksStatus={workbooksStatus} style={{ ...btnBase, background: "var(--surface)", color: "var(--text)" }} />
         <Link
-          href={`/results?run_id=${encodeURIComponent(runFullId)}`}
+          href={`/ecl/results?run_id=${encodeURIComponent(runFullId)}`}
           style={{
             ...btnBase,
             background: "var(--accent)",
@@ -225,7 +225,7 @@ export function RunDetailHeader({ run, onOpenModal }: RunDetailHeaderProps) {
   return (
     <div className="detail-head">
       {/* Back link */}
-      <Link href="/runs" className="detail-back">
+      <Link href="/ecl/runs" className="detail-back">
         <ArrowLeft size={13} />
         All runs
       </Link>

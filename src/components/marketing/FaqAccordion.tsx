@@ -14,7 +14,7 @@ const faqs = [
     a: "Yes. Given identical inputs, the engine will always produce bit-for-bit identical output. Every run is hashed and the hash is stored in the audit trail. Your auditor can verify this at any time.",
   },
   {
-    q: "Does ECL Platform use AI or machine learning?",
+    q: "Does Ledgerline use AI or machine learning?",
     a: "No. The engine is a pure implementation of the IFRS 9 standard — no neural networks, no black-box models. Every line of the computation is explainable and auditable. AI-based forward-looking overlays are on the roadmap for a later phase, and will be clearly labelled as such.",
   },
   {

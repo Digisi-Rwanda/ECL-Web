@@ -158,12 +158,12 @@ export function ResultsExplorer({ initialRunId }: ResultsExplorerProps) {
       setCurLoan("");
       setFilter(defaultFilter);
       setSegmentPage(1);
-      router.replace(`/results?run_id=${encodeURIComponent(run.fullId)}`, { scroll: false });
+      router.replace(`/ecl/results?run_id=${encodeURIComponent(run.fullId)}`, { scroll: false });
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    router.push(`/runs/${run.fullId}`);
+    router.push(`/ecl/runs/${run.fullId}`);
   }
 
   function drill(lvl: DrillLevel) {

@@ -10,8 +10,8 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const protectedPrefixes = [
         "/dashboard",
-        "/runs",
-        "/results",
+        "/ecl",
+        "/leases",
         "/admin",
         "/settings",
         "/platform",
