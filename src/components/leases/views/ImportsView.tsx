@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Download, FileSpreadsheet, XCircle, AlertTriangle, CheckCircle2, RotateCcw, Send } from "lucide-react";
 import { fmtDateTime, persona } from "@/lib/leases/model";
 import {
-  createImport, setImportMapping, acceptImportWarnings, startCommit, retryFailed, cancelImport, submitImported,
+  createImport, setImportMapping, acceptImportWarnings, startCommit, retryFailed, cancelImport, submitImported, refreshImport, importErrorsCsv,
   IMPORT_COLUMNS, IMPORT_TEMPLATE_VERSION, importTemplateRows,
 } from "@/lib/leases/store";
-import { parseCsv, sha256Hex, toCsv, downloadText } from "@/lib/leases/csv";
+import { toCsv, downloadText } from "@/lib/leases/csv";
 import type { ImportBatch } from "@/lib/leases/types";
 import { PageHeader, Card, Btn, Banner, StatusBadge, EmptyState, Stepper, Progress, Select, BtnLink, Kpi, Tabs } from "@/components/ll/Kit";
 import { Confirm } from "@/components/ll/Overlay";
@@ -29,12 +29,11 @@ export function ImportsView() {
   const [drag, setDrag] = useState(false);
   const onFile = async (f?: File) => {
     if (!f) return;
-    if (!/\.csv$/i.test(f.name)) { toast("danger", "Upload a .csv file. In Excel: File → Save As → CSV UTF-8."); return; }
+    if (!/\.(csv|xlsx)$/i.test(f.name)) { toast("danger", "Upload a .csv or .xlsx file."); return; }
     if (f.size > 20 * 1024 * 1024) { toast("danger", "File is larger than 20 MB."); return; }
     setBusy(true);
     try {
-      const text = await f.text();
-      const id = await createImport(f.name, await sha256Hex(text), f.size, parseCsv(text));
+      const id = await createImport(f);
       router.push(`/leases/imports/${id}`);
     } catch (e) {
       toast("danger", e instanceof Error ? e.message : "Couldn't read the file");
@@ -57,7 +56,7 @@ export function ImportsView() {
             </div>
           </Card>
           <Card title="2. Upload the file">
-            <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ""; }} />
+            <input ref={fileRef} type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={(e) => { void onFile(e.target.files?.[0]); e.target.value = ""; }} />
             <div
               className="input-card"
               style={{ borderStyle: "dashed", justifyContent: "center", padding: 28, cursor: "pointer", flexDirection: "column", textAlign: "center", background: drag ? "var(--accent-subtle)" : undefined }}
@@ -71,7 +70,7 @@ export function ImportsView() {
               aria-busy={busy}
             >
               <Upload size={20} className="ll-subtle" />
-              <span>{busy ? "Reading file…" : "Drop a CSV here, or click to choose"}</span>
+              <span>{busy ? "Reading file…" : "Drop a CSV or Excel file here, or click to choose"}</span>
               <span className="ll-subtle" style={{ fontSize: 12 }}>Up to 10,000 rows · the same file can&apos;t be imported twice</span>
             </div>
           </Card>
@@ -108,12 +107,20 @@ export function ImportBatchView({ id }: { id: string }) {
   const [filter, setFilter] = useState<"issues" | "errors" | "warnings" | "all">("issues");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [approver, setApprover] = useState("");
+  const running = b?.status === "validating" || b?.status === "committing";
+  // rows live on the detail endpoint; poll while a background job runs
+  useEffect(() => {
+    void refreshImport(id).catch(() => {});
+    if (!running) return;
+    const t = setInterval(() => void refreshImport(id).catch(() => {}), 1000);
+    return () => clearInterval(t);
+  }, [id, running]);
   if (!b) return <div className="ll-card"><EmptyState icon={FileSpreadsheet} title="Import not found" actions={<BtnLink href="/leases/imports">Imports</BtnLink>} /></div>;
-  if (!b.rows.length && b.status === "committed") {
+  if (!b.rows?.length && b.status === "committed" && !b.headers?.length) {
     return (
       <>
         <PageHeader back={{ href: "/leases/imports", label: "Imports" }} title={b.id} badge={<StatusBadge tone="success">committed</StatusBadge>} sub={b.fileName} />
-        <Banner tone="info">Historical import from before row-level reporting was kept in this demo.</Banner>
+        <Banner tone="info">Loading rows…</Banner>
       </>
     );
   }
@@ -124,7 +131,7 @@ export function ImportBatchView({ id }: { id: string }) {
   const created = b.rows.filter((r) => r.outcome === "created" || r.outcome === "updated");
   const failed = b.rows.filter((r) => r.outcome === "failed");
   const rows = b.rows.filter((r) => filter === "all" || (filter === "errors" ? r.issues.some((i) => i.severity === "error") : filter === "warnings" ? r.issues.some((i) => i.severity === "warning") : r.issues.length > 0 || r.outcome === "failed"));
-  const errorFile = () => downloadText(`${b.id}_errors.csv`, toCsv([[...b.headers, "row", "severity", "column", "message"], ...b.rows.flatMap((r) => r.issues.map((i) => [...b.headers.map((h) => r.values[h]), r.row, i.severity, i.column, i.message]))]));
+  const errorFile = () => run("err", async () => downloadText(`${b.id}_errors.csv`, await importErrorsCsv(b.id)));
   const reviewers = st.personas.filter((p) => p.id !== me.id && p.role !== "analyst");
 
   return (

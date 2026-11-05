@@ -368,7 +368,8 @@ export function buildSchedule(segs: SegmentResult[], policy: Policy): ScheduleRo
     exact.push(row);
   }
 
-  // Cumulative rounding per column: posted totals always tie to the rounded cumulative amount.
+  // Cumulative rounding per column; closing balances are the rounded exact balances and
+  // interest / depreciation absorb the cent so the roll-forward always ties and ends at 0.00.
   const cum: Record<string, Decimal> = {};
   const roundedDelta = (key: keyof ExactRow, v: Decimal) => {
     const prev = cum[key] ?? ZERO;
@@ -377,23 +378,27 @@ export function buildSchedule(segs: SegmentResult[], policy: Policy): ScheduleRo
   };
   let L = ZERO;
   let R = ZERO;
+  let exactL = ZERO;
+  let exactR = ZERO;
   return exact.map((e) => {
     const additions = roundedDelta("additions", e.additions);
-    const interest = roundedDelta("interest", e.interest);
     const payments = roundedDelta("payments", e.payments);
     const remeasurement = roundedDelta("remeasurement", e.remeasurement);
     const derecognised = roundedDelta("derecognised", e.derecognised);
     const rouAdditions = roundedDelta("rouAdditions", e.rouAdditions);
-    const depreciation = roundedDelta("depreciation", e.depreciation);
     const rouAdjustment = roundedDelta("rouAdjustment", e.rouAdjustment);
     const rouDerecognised = roundedDelta("rouDerecognised", e.rouDerecognised);
     const provisionUnwind = roundedDelta("provisionUnwind", e.provisionUnwind);
     const gainLoss = roundedDelta("gainLoss", e.gainLoss);
     const penalty = roundedDelta("penalty", e.penalty);
+    exactL = exactL.plus(e.additions).plus(e.interest).minus(e.payments).plus(e.remeasurement).minus(e.derecognised);
+    exactR = exactR.plus(e.rouAdditions).minus(e.depreciation).plus(e.rouAdjustment).minus(e.rouDerecognised);
     const liabOpening = L;
-    L = L.plus(additions).plus(interest).minus(payments).plus(remeasurement).minus(derecognised);
+    L = r2(exactL);
+    const interest = L.minus(liabOpening).minus(additions).plus(payments).minus(remeasurement).plus(derecognised);
     const rouOpening = R;
-    R = R.plus(rouAdditions).minus(depreciation).plus(rouAdjustment).minus(rouDerecognised);
+    R = r2(exactR);
+    const depreciation = rouOpening.plus(rouAdditions).plus(rouAdjustment).minus(rouDerecognised).minus(R);
     return {
       month: e.month, periodEnd: e.periodEnd, segment: e.segment, hasEvent: e.hasEvent,
       liabOpening: liabOpening.toFixed(2), additions: additions.toFixed(2), interest: interest.toFixed(2),

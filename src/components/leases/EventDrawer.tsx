@@ -4,7 +4,7 @@ import { TrendingUp, CalendarRange, FileSignature, DoorOpen, HelpCircle, Send } 
 import { compute, D, type EventType } from "@/lib/leases/engine";
 import { addDays, isISODate, monthKey } from "@/lib/leases/dates";
 import { approvedChain, curveOf, curveRate, enginePolicy, fmtDate, isLockedDate, pct, periodLabel, currentPeriod, segmentInputs, termYears } from "@/lib/leases/model";
-import { startEvent, submitForReview, getState, type EventDraft } from "@/lib/leases/store";
+import { startEvent, getState, type EventDraft } from "@/lib/leases/store";
 import type { Lease, LeaseVersion } from "@/lib/leases/types";
 import { Drawer } from "@/components/ll/Overlay";
 import { Field, DateInput, MoneyInput, RateInput, TextArea, Select, Btn, Banner, Money, Choice, YesNo } from "@/components/ll/Kit";
@@ -105,8 +105,7 @@ export function EventDrawer({ lease, open, onOpenChange }: { lease: Lease; open:
     if (!approver) { toast("danger", "Choose a reviewer."); return; }
     setBusy(true);
     try {
-      const rev = await startEvent(lease.id, lease.rev, draft);
-      await submitForReview(lease.id, rev, approver, reason);
+      await startEvent(lease.id, lease.rev, { ...draft, approverId: approver });
       toast("success", "Change submitted for review");
       reset();
       onOpenChange(false);

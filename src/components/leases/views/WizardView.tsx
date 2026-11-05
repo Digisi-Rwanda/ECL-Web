@@ -12,9 +12,8 @@ import {
 } from "@/lib/leases/model";
 import {
   createDraft, updateDraft, calculate, submitForReview, discardDraft, addDoc, removeDoc, addCounterparty, validateVersion,
-  possibleDuplicates, getState, LeaseError,
+  possibleDuplicates, getState, LeaseError, documentUrl,
 } from "@/lib/leases/store";
-import { sha256Hex } from "@/lib/leases/csv";
 import type { Lease, LeaseVersion, OptionItem } from "@/lib/leases/types";
 import {
   PageHeader, Card, Field, TextInput, DateInput, MoneyInput, RateInput, Select, TextArea, YesNo, Choice, Combobox, Btn, Banner,
@@ -36,7 +35,7 @@ const STEP_FIELDS: string[][] = [
 ];
 const stepOf = (field: string) => STEP_FIELDS.findIndex((fs) => fs.some((f) => field.startsWith(f)));
 
-/** Session-only PDF previews (demo storage keeps document metadata + hash, not the file). */
+/** Object URLs for files uploaded in this session (instant preview); stored files use a signed URL. */
 const previews = new Map<string, string>();
 
 type Local = { lease: Lease; v: LeaseVersion };
@@ -67,7 +66,7 @@ export function WizardView() {
   if (!can(me.role, "prepare")) {
     return (
       <RequireSetup>
-        <div className="ll-card"><EmptyState icon={Ban} title="Reviewers don't create leases" body="Leases are prepared by preparers or administrators and come to you for review. Switch the demo persona to try preparing one." /></div>
+        <div className="ll-card"><EmptyState icon={Ban} title="Reviewers don't create leases" body="Leases are prepared by preparers or administrators and come to you for review in your inbox." /></div>
       </RequireSetup>
     );
   }
@@ -245,10 +244,10 @@ function Wizard({ initial }: { initial?: Lease }) {
       if (f.size > 25 * 1024 * 1024) { toast("danger", `${f.name} is larger than 25 MB.`); continue; }
       if (!/pdf|image/.test(f.type)) { toast("danger", `${f.name}: upload a PDF or an image.`); continue; }
       try {
-        const hash = await sha256Hex(await f.arrayBuffer());
-        await addDoc(idRef.current, { name: f.name, size: f.size, sha256: hash, kind: lease.docs.length ? "amendment" : "contract" });
+        const up = await addDoc(idRef.current, f);
+        const hash = up.sha256;
         const fresh = getState()!.leases.find((l) => l.id === idRef.current)!;
-        const doc = fresh.docs.at(-1)!;
+        const doc = fresh.docs.find((d) => d.id === up.id) ?? fresh.docs.at(-1)!;
         previews.set(doc.id, URL.createObjectURL(f));
         revRef.current = fresh.rev;
         setLocal((p) => ({ ...p, lease: { ...p.lease, docs: fresh.docs } }));
@@ -391,7 +390,13 @@ function Wizard({ initial }: { initial?: Lease }) {
                         <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
                         <span className="ll-code">{d.kind} · {(d.size / 1024).toFixed(0)} KB · {d.sha256.slice(0, 12)}…</span>
                       </span>
-                      {previews.has(d.id) ? <Btn size="sm" variant="ghost" onClick={() => setPreview(preview === d.id ? null : d.id)}><Eye size={13} /> {preview === d.id ? "Hide" : "View"}</Btn> : <span className="ll-subtle" style={{ fontSize: 11 }}>Preview in upload session only</span>}
+                      <Btn size="sm" variant="ghost" onClick={async () => {
+                        if (preview === d.id) return setPreview(null);
+                        try {
+                          if (!previews.has(d.id)) previews.set(d.id, await documentUrl(savedId, d.id));
+                          setPreview(d.id);
+                        } catch (e) { toast("danger", e instanceof Error ? e.message : "Couldn't open the document"); }
+                      }}><Eye size={13} /> {preview === d.id ? "Hide" : "View"}</Btn>
                       {!readOnly && <button className="btn btn-icon btn-sm" aria-label={`Remove ${d.name}`} onClick={async () => { try { await removeDoc(idRef.current, d.id); const fresh = getState()!.leases.find((l) => l.id === idRef.current)!; revRef.current = fresh.rev; setLocal((p) => ({ ...p, lease: { ...p.lease, docs: fresh.docs } })); if (preview === d.id) setPreview(null); } catch (e) { toast("danger", e instanceof Error ? e.message : "Couldn't remove"); } }}><Trash2 size={14} /></button>}
                     </li>
                   ))}

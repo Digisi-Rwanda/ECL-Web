@@ -127,3 +127,28 @@ console.log(`\n${n} golden cases passed`);
   assert.ok(ms < 1500, `10-year monthly lease took ${ms.toFixed(0)}ms`);
   console.log(`✓ perf: 10-year monthly lease in ${ms.toFixed(0)}ms`);
 }
+
+// Shared golden fixture (copy of ECL-Server tests/fixtures/leases_golden.json): both engines must agree.
+import golden from "./golden.json";
+import type { SegmentInput } from "./engine";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- loose fixture JSON
+type GoldenExpect = Record<string, any>;
+for (const gc of golden.cases as Array<{ name: string; dayCount: "periodic" | "act365"; inputs: SegmentInput[]; expect: GoldenExpect }>) {
+  t(`golden: ${gc.name}`, () => {
+    const c = compute(gc.inputs, { dayCount: gc.dayCount });
+    const e = gc.expect;
+    assert.ok(c.checks.every((k) => k.ok), JSON.stringify(c.checks.filter((k) => !k.ok)));
+    if (e.L0) assert.equal(c.segments[0].L0.toFixed(2), e.L0);
+    if (e.R0) assert.equal(c.segments[0].R0.toFixed(2), e.R0);
+    for (const [col, years] of Object.entries((e.yearSums ?? {}) as Record<string, Record<string, string>>)) for (const [y, v] of Object.entries(years)) assert.equal(sumBy(c.rows, col, y), v);
+    for (const [m, v] of Object.entries((e.closing ?? {}) as Record<string, string>)) assert.equal(c.rows.find((r) => r.month === m)!.liabClosing, v);
+    if (e.firstRow) for (const [k, v] of Object.entries(e.firstRow)) assert.equal((c.rows[0] as never)[k], v);
+    if (e.seg1) for (const [k, v] of Object.entries(e.seg1 as Record<string, string>)) assert.equal((c.segments[1] as unknown as Record<string, { toFixed(n: number): string }>)[k].toFixed(2), v);
+    if (e.lastClosing) assert.equal(c.rows.at(-1)!.liabClosing, e.lastClosing);
+    if (e.flowCount) { assert.equal(c.flows.length, e.flowCount); assert.equal(c.flows[0].date, e.firstFlowDate); assert.equal(c.flows.at(-1)!.amount.toFixed(2), e.lastFlowAmount); }
+    if (e.flowAmounts) assert.deepEqual(c.flows.map((f) => f.amount.toFixed(2)), e.flowAmounts);
+    if (e.currentSplit) assert.deepEqual(currentSplit(c.segments, e.currentSplit.asOf, { dayCount: gc.dayCount }), { current: e.currentSplit.current, nonCurrent: e.currentSplit.nonCurrent });
+    if (e.maturity) assert.deepEqual(maturity(c.segments, e.maturity.asOf), e.maturity.buckets);
+  });
+}
+console.log(`\n${n} cases passed incl. shared golden fixture`);

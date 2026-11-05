@@ -9,7 +9,7 @@ import {
   approvedChain, balancesAt, computeLease, computeVersions, computeWithPending, currentPeriod, enginePolicy, fmtDate, fmtDateTime, isExempt,
   leaseStatus, pct, pendingVersion, persona, periodLabel, todayISO, glOf,
 } from "@/lib/leases/model";
-import { decide, withdraw } from "@/lib/leases/store";
+import { decide, withdraw, documentUrl } from "@/lib/leases/store";
 import { toCsv, downloadText } from "@/lib/leases/csv";
 import { ASSET_CLASSES, type Lease, type LeaseVersion } from "@/lib/leases/types";
 import { PageHeader, Card, Btn, BtnLink, Banner, Money, Tabs, StatusBadge, EmptyState, Select, TextArea, Field, Kpi } from "@/components/ll/Kit";
@@ -125,6 +125,7 @@ function Detail({ lease }: { lease: Lease }) {
         </Banner>
       )}
       {pend && pend.event !== "initial" && pend.status !== "in_review" && <Banner tone="warning" title={`Change v${pend.n} is a draft`}>{pend.status === "returned" ? "It was returned with comments — see History." : "Submit it for review or discard it."}</Banner>}
+      {lease.verificationFailed && <Banner tone="danger" title="Stored schedule no longer matches its inputs">The nightly check recalculated this lease and got different books. Record a change to recalculate and re-approve, or contact support.</Banner>}
       {status === "terminated" && <Banner tone="locked" title="Terminated">Ended {fmtDate(chain.at(-1)!.effectiveDate)}. History is kept; no further changes.</Banner>}
       {status === "expired" && <Banner tone="locked" title="Expired">The lease term ended {fmtDate(chain.at(-1)!.terms.endDate)}. If you still occupy the asset, record a term reassessment or a new lease (holdover).</Banner>}
       {selected !== (pend ?? chain.at(-1)) && <Banner tone="info" title={`Viewing v${selected.n} (${selected.status})`} action={<Btn size="sm" onClick={() => setVq("")}>Back to latest</Btn>}>Schedules show the books as they were with this version.</Banner>}
@@ -162,7 +163,7 @@ function Detail({ lease }: { lease: Lease }) {
               <dt>Payments</dt><dd>{selected.terms.paymentRule ? `${Number(selected.terms.paymentRule.amountSteps?.at(-1)?.amount ?? selected.terms.paymentRule.amount).toLocaleString()} ${selected.terms.paymentRule.frequency}, in ${selected.terms.paymentRule.timing}` : "Manual lines"}{selected.terms.paymentRule?.escalation.type === "fixed_pct" ? ` · +${pct(selected.terms.paymentRule.escalation.pct)} every ${selected.terms.paymentRule.escalation.everyMonths} months` : ""}</dd>
               <dt>Treatment</dt><dd>{exempt ? `Exempt (${selected.assessment.exemption?.replace("_", "-")})` : "Capitalised (IFRS 16)"}</dd>
               <dt>Discount rate</dt><dd>{exempt ? "—" : `${pct(selected.rate.value)} · ${selected.rate.source}${selected.rate.reason ? ` — ${selected.rate.reason}` : ""}`}</dd>
-              {bal && !exempt && <><dt>Current / non-current</dt><dd><Money value={bal.current} /> / <Money value={bal.nonCurrent} /></dd></>}
+              {bal && !exempt && status !== "not_commenced" && <><dt>Current / non-current</dt><dd><Money value={bal.current} /> / <Money value={bal.nonCurrent} /></dd></>}
             </dl>
           </Card>
           <Card title="Timeline">
@@ -181,8 +182,8 @@ function Detail({ lease }: { lease: Lease }) {
         <Card title="Documents" sub="Fingerprinted on upload; files on approved versions can't be removed.">
           {lease.docs.length === 0 ? <EmptyState icon={FileText} title="No documents" body="Attach the signed contract from the draft." /> : (
             <div className="ll-table-wrap"><table className="ll-table">
-              <thead><tr><th>File</th><th>Kind</th><th>Version</th><th>SHA-256</th><th>Uploaded</th></tr></thead>
-              <tbody>{lease.docs.map((d) => <tr key={d.id}><td>{d.name}</td><td>{d.kind}</td><td>v{d.versionN}</td><td className="ll-code">{d.sha256.slice(0, 16)}…</td><td><PersonById st={st} id={d.uploadedBy} /> <span className="ll-subtle" style={{ fontSize: 11 }}>{fmtDateTime(d.uploadedAt)}</span></td></tr>)}</tbody>
+              <thead><tr><th>File</th><th>Kind</th><th>Version</th><th>SHA-256</th><th>Uploaded</th><th /></tr></thead>
+              <tbody>{lease.docs.map((d) => <tr key={d.id}><td>{d.name}</td><td>{d.kind}</td><td>v{d.versionN}</td><td className="ll-code">{d.sha256.slice(0, 16)}…</td><td><PersonById st={st} id={d.uploadedBy} /> <span className="ll-subtle" style={{ fontSize: 11 }}>{fmtDateTime(d.uploadedAt)}</span></td><td><Btn size="sm" variant="ghost" onClick={async () => { const w = window.open("", "_blank"); try { const url = await documentUrl(lease.id, d.id); if (w) w.location.href = url; } catch { w?.close(); } }}>Open</Btn></td></tr>)}</tbody>
             </table></div>
           )}
         </Card>
@@ -370,7 +371,7 @@ function HistoryTab({ lease }: { lease: Lease }) {
         </ol>
       </Card>
       <Card title="Audit trail" pad={false}>
-        {audit.length === 0 ? <EmptyState icon={Lock} title="No audit entries in this browser" body="Seeded history predates the demo log." /> : (
+        {audit.length === 0 ? <EmptyState icon={Lock} title="No audit entries yet" /> : (
           <ul>{audit.map((a) => <li key={a.id} style={{ padding: "10px 16px", borderBottom: "1px solid var(--border)", fontSize: 13 }}><span className="ll-code">{fmtDateTime(a.at)}</span> · <PersonById st={st} id={a.by} /> · {a.action}{a.detail ? ` — ${a.detail}` : ""}</li>)}</ul>
         )}
       </Card>

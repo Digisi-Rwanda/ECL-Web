@@ -1,0 +1,629 @@
+{
+ "version": 1,
+ "note": "Shared by ECL-Server pytest and ECL-Web tsx. Illustrative until signed off by the accounting lead.",
+ "cases": [
+  {
+   "name": "T01 3-year annual arrears @10%",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    }
+   ],
+   "expect": {
+    "L0": "24868.52",
+    "R0": "24868.52",
+    "yearSums": {
+     "interest": {
+      "2027": "2486.85",
+      "2028": "1735.54",
+      "2029": "909.09"
+     },
+     "depreciation": {
+      "2027": "8289.51"
+     }
+    },
+    "closing": {
+     "2027-12": "17355.37",
+     "2028-12": "9090.91"
+    },
+    "currentSplit": {
+     "asOf": "2027-12-31",
+     "current": "8264.46",
+     "nonCurrent": "9090.91"
+    },
+    "maturity": {
+     "asOf": "2027-12-31",
+     "buckets": [
+      "10000.00",
+      "10000.00",
+      "0.00",
+      "0.00"
+     ]
+    }
+   }
+  },
+  {
+   "name": "monthly 1,000 x 12 arrears at 1%/month",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2027-12-31",
+      "paymentRule": {
+       "amount": "1000",
+       "frequency": "monthly",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.12682503013196972066",
+     "event": "initial"
+    }
+   ],
+   "expect": {
+    "L0": "11255.08",
+    "firstRow": {
+     "interest": "112.55"
+    }
+   }
+  },
+  {
+   "name": "advance payments: first payment in ROU",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2027-12-31",
+      "paymentRule": {
+       "amount": "1000",
+       "frequency": "monthly",
+       "timing": "advance",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.12682503013196972066",
+     "event": "initial"
+    }
+   ],
+   "expect": {
+    "L0": "10367.63",
+    "R0": "11367.63"
+   }
+  },
+  {
+   "name": "rent-free + fixed escalation flows",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2028-12-31",
+      "paymentRule": {
+       "amount": "1000",
+       "frequency": "monthly",
+       "timing": "arrears",
+       "escalation": {
+        "type": "fixed_pct",
+        "pct": "0.05",
+        "everyMonths": 12
+       },
+       "rentFreeMonths": 3
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    }
+   ],
+   "expect": {
+    "flowCount": 21,
+    "firstFlowDate": "2027-04-30",
+    "lastFlowAmount": "1050.00"
+   }
+  },
+  {
+   "name": "T03 IDC, incentives, restoration",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "500",
+      "incentivesReceived": "1000",
+      "restorationEstimate": "1331"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    }
+   ],
+   "expect": {
+    "R0": "25368.52"
+   }
+  },
+  {
+   "name": "T05 CPI +5% unchanged rate",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    },
+    {
+     "start": "2028-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0,
+       "amountSteps": [
+        {
+         "from": "2028-01-01",
+         "amount": "10500"
+        }
+       ]
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "index"
+    }
+   ],
+   "expect": {
+    "seg1": {
+     "liabAdj": "867.77",
+     "R0": "17446.78"
+    }
+   }
+  },
+  {
+   "name": "T06 rent cut at revised 12%",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    },
+    {
+     "start": "2028-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0,
+       "amountSteps": [
+        {
+         "from": "2028-01-01",
+         "amount": "8000"
+        }
+       ]
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.12",
+     "event": "modification"
+    }
+   ],
+   "expect": {
+    "seg1": {
+     "liabAdj": "-3834.96",
+     "gainLoss": "0.00"
+    }
+   }
+  },
+  {
+   "name": "T06 50% scope decrease",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    },
+    {
+     "start": "2028-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0,
+       "amountSteps": [
+        {
+         "from": "2028-01-01",
+         "amount": "5000"
+        }
+       ]
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "modification",
+     "scopeDecrease": "0.5"
+    }
+   ],
+   "expect": {
+    "seg1": {
+     "gainLoss": "388.18",
+     "liabAdj": "0.00"
+    }
+   }
+  },
+  {
+   "name": "termination with penalty",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    },
+    {
+     "start": "2028-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2029-12-31",
+      "paymentRule": {
+       "amount": "10000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "termination",
+     "terminationPenalty": "1000"
+    }
+   ],
+   "expect": {
+    "seg1": {
+     "gainLoss": "-223.64"
+    },
+    "lastClosing": "0.00"
+   }
+  },
+  {
+   "name": "leap year, 31st, act/365",
+   "dayCount": "act365",
+   "inputs": [
+    {
+     "start": "2028-01-31",
+     "terms": {
+      "commencementDate": "2028-01-31",
+      "endDate": "2031-01-30",
+      "paymentRule": {
+       "amount": "2500",
+       "frequency": "monthly",
+       "timing": "arrears",
+       "escalation": {
+        "type": "none"
+       },
+       "rentFreeMonths": 0
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.0875",
+     "event": "initial"
+    }
+   ],
+   "expect": {}
+  },
+  {
+   "name": "CPI resets base, escalation continues",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2027-01-01",
+     "terms": {
+      "commencementDate": "2027-01-01",
+      "endDate": "2030-12-31",
+      "paymentRule": {
+       "amount": "1000",
+       "frequency": "annual",
+       "timing": "arrears",
+       "escalation": {
+        "type": "fixed_pct",
+        "pct": "0.10",
+        "everyMonths": 12
+       },
+       "rentFreeMonths": 0,
+       "amountSteps": [
+        {
+         "from": "2028-01-01",
+         "amount": "2000"
+        }
+       ]
+      },
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0"
+     },
+     "rate": "0.10",
+     "event": "initial"
+    }
+   ],
+   "expect": {
+    "flowAmounts": [
+     "1000.00",
+     "2000.00",
+     "2200.00",
+     "2420.00"
+    ]
+   }
+  },
+  {
+   "name": "rounding: back-dated CPI on escalating quarterly advance ends at 0.00",
+   "dayCount": "periodic",
+   "inputs": [
+    {
+     "start": "2024-01-01",
+     "terms": {
+      "commencementDate": "2024-01-01",
+      "endDate": "2028-12-31",
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0",
+      "paymentRule": {
+       "amount": "2100",
+       "frequency": "quarterly",
+       "timing": "advance",
+       "rentFreeMonths": 0,
+       "escalation": {
+        "type": "fixed_pct",
+        "pct": "0.03",
+        "everyMonths": 12
+       }
+      }
+     },
+     "rate": "0.0925",
+     "event": "initial"
+    },
+    {
+     "start": "2026-09-01",
+     "terms": {
+      "commencementDate": "2024-01-01",
+      "endDate": "2028-12-31",
+      "manualLines": [],
+      "nonLeasePerPayment": "0",
+      "separateNonLease": true,
+      "prepaidBeforeCommencement": "0",
+      "initialDirectCosts": "0",
+      "incentivesReceived": "0",
+      "restorationEstimate": "0",
+      "paymentRule": {
+       "amount": "2100",
+       "frequency": "quarterly",
+       "timing": "advance",
+       "rentFreeMonths": 0,
+       "escalation": {
+        "type": "fixed_pct",
+        "pct": "0.03",
+        "everyMonths": 12
+       },
+       "amountSteps": [
+        {
+         "from": "2026-09-01",
+         "amount": "2310"
+        }
+       ]
+      }
+     },
+     "rate": "0.0925",
+     "event": "index"
+    }
+   ],
+   "expect": {
+    "lastClosing": "0.00"
+   }
+  }
+ ]
+}

@@ -19,7 +19,7 @@ export function InboxView() {
   const list = tab === "waiting" ? box.waiting : tab === "done" ? box.done : box.todo;
   return (
     <>
-      <PageHeader title="Inbox" sub={`Everything waiting for ${me.name} (${me.role === "analyst" ? "preparer" : me.role}). Switch persona in the demo bar to see other people's inboxes.`} />
+      <PageHeader title="Inbox" sub={`Everything waiting for ${me.name} (${me.role === "analyst" ? "preparer" : me.role}).`} />
       <Tabs label="Inbox" value={tab as "todo" | "waiting" | "done" | "notifications"} onChange={setTab} tabs={[
         { id: "todo", label: "To do", count: box.todo.length },
         { id: "waiting", label: "Waiting on others", count: box.waiting.length },

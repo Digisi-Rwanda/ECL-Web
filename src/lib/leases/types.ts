@@ -182,6 +182,8 @@ export interface Lease {
   /** optimistic-lock revision, bumped on every write */
   rev: number;
   importBatchId?: string;
+  /** nightly check found stored books differ from a fresh recomputation */
+  verificationFailed?: boolean;
 }
 
 export type LeaseStatus =
@@ -215,6 +217,7 @@ export interface JournalBatch {
   reversalOf?: string;
   reversedBy?: string;
   idempotencyKey: string;
+  sourceRevs?: string;
 }
 
 export type CloseStepId = "cutoff" | "rates" | "events" | "generate" | "matching" | "reconcile" | "approve" | "post";
@@ -310,7 +313,7 @@ export interface AuditEntry {
 export interface LeasesState {
   schema: 1;
   tenantId: string;
-  seededAs: "sample" | "empty";
+  seededAs: "sample" | "empty" | "server";
   personaId: string;
   personas: Persona[];
   entity?: Entity;
@@ -331,4 +334,12 @@ export interface LeasesState {
   savedViews: Array<{ id: string; name: string; query: string }>;
   importMapping?: Record<string, string>;
   seq: { lease: number; batch: number; import: number; id: number };
+  /** server-computed close step issues + reconciliations, per non-locked close */
+  closeIssues?: Record<string, {
+    steps: Partial<Record<CloseStepId, { errors: string[]; warnings: string[] }>>;
+    reconciliations: Array<{ id: string; label: string; books: string; gl: string; ok: boolean; diff: string }>;
+    sourceChecksum: string;
+  }>;
+  /** the signed-in user's role in this workspace */
+  role?: Role;
 }

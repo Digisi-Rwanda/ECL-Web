@@ -1,15 +1,16 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { CalendarCheck, Play, Lock, Unlock, Download, CheckCircle2, RefreshCw, ChevronRight } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { CalendarCheck, Play, Lock, Unlock, Download, CheckCircle2, RefreshCw, ChevronRight, Upload } from "lucide-react";
 import { D, ACCOUNT_LABELS } from "@/lib/leases/engine";
 import { monthEnd } from "@/lib/leases/dates";
 import { currentPeriod, fmtDateTime, glOf, periodLabel, persona, lastLocked } from "@/lib/leases/model";
 import {
   closeOf, startClose, completeStep, stepIssues, generateBatch, resolvePayment, exportBatch, markPosted, lockPeriod, reopenPeriod,
+  uploadPayments, confirmScheduledPayments,
   reconciliations, batchTotals, batchStale,
 } from "@/lib/leases/store";
-import { toCsv, downloadText } from "@/lib/leases/csv";
+import { downloadText } from "@/lib/leases/csv";
 import type { CloseStepId, JournalBatch, LeasesState, ActualPayment } from "@/lib/leases/types";
 import { PageHeader, Card, Btn, Banner, Money, StatusBadge, EmptyState, TextInput, TextArea, Select, Field, CheckRow, BtnLink } from "@/components/ll/Kit";
 import { Confirm, Modal } from "@/components/ll/Overlay";
@@ -168,11 +169,11 @@ function Close({ period }: { period: string }) {
                     {recs.map((r) => <CheckRow key={r.id} ok={r.ok} label={r.label} detail={`subledger ${D(r.books).toFixed(2)} · GL ${D(r.gl).toFixed(2)} · difference ${r.diff}`} />)}
                   </div>
                 )}
-                {s.id === "approve" && step.status === "todo" && b && b.createdBy === me.id && <div className="body"><p className="d">You generated this batch — switch to a reviewer to approve it.</p></div>}
+                {s.id === "approve" && step.status === "todo" && b && b.createdBy === me.id && <div className="body"><p className="d">You generated this batch, so a reviewer or another administrator must approve it.</p></div>}
                 {s.id === "post" && step.status !== "locked" && b && !locked && (
                   <div className="body ll-stack" style={{ marginTop: 8 }}>
                     <div className="ll-row">
-                      <Btn size="sm" loading={pending === "exp"} onClick={async () => { const ok = await run("exp", () => exportBatch(b.id)); if (ok !== undefined) downloadBatch(st, b); }}><Download size={13} /> Export journal file</Btn>
+                      <Btn size="sm" loading={pending === "exp"} onClick={() => run("exp", () => downloadBatch(b.id))}><Download size={13} /> Export journal file</Btn>
                       {b.exportedAt && <span className="ll-subtle" style={{ fontSize: 12 }}>Exported {fmtDateTime(b.exportedAt)} · idempotency key <span className="ll-mono">{b.idempotencyKey}</span></span>}
                     </div>
                     {b.status !== "posted" ? (
@@ -244,11 +245,21 @@ function Matching({ period, payments, locked }: { period: string; payments: Actu
   const [open, setOpen] = useState<ActualPayment | null>(null);
   const [res, setRes] = useState<NonNullable<ActualPayment["resolution"]>>("accrue");
   const [note, setNote] = useState("");
+  const apRef = useRef<HTMLInputElement>(null);
   const issues = payments.filter((p) => p.match !== "matched");
   const matched = payments.length - issues.length;
+  const unpaid = issues.filter((p) => p.match === "late" && !p.resolution).length;
   return (
     <div className="ll-stack" style={{ marginTop: 8 }}>
-      <p className="d">{matched} of {payments.length} matched automatically (lease, vendor, amount, date window). {issues.filter((x) => !x.resolution).length} need a decision.</p>
+      <p className="d">{matched} of {payments.length} scheduled payments matched (vendor, amount, ±10 days). {issues.filter((x) => !x.resolution).length} need a decision.</p>
+      {!locked && (
+        <div className="ll-row">
+          <input ref={apRef} type="file" accept=".csv,.xlsx" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void run("ap", () => uploadPayments(period, f), "Payments file matched"); }} />
+          <Btn size="sm" onClick={() => apRef.current?.click()}><Upload size={13} /> Upload AP / bank file</Btn>
+          {unpaid > 0 && <Btn size="sm" onClick={() => run("conf", () => confirmScheduledPayments(period), `${unpaid} payments confirmed as paid`)}>Confirm {unpaid} paid as scheduled</Btn>}
+          <span className="ll-subtle" style={{ fontSize: 12 }}>File columns: date, vendor, amount, reference.</span>
+        </div>
+      )}
       <div className="ll-table-wrap"><table className="ll-table">
         <thead><tr><th>Ref</th><th>Vendor</th><th>Lease</th><th className="num">Expected</th><th className="num">Paid</th><th>Status</th><th /></tr></thead>
         <tbody>
@@ -261,7 +272,7 @@ function Matching({ period, payments, locked }: { period: string; payments: Actu
                 <td>{l ? <Link className="ll-link" href={`/leases/${l.id}`}>{l.code}</Link> : <span className="ll-subtle">none</span>}</td>
                 <td className="num"><Money value={p.expected} /></td>
                 <td className="num"><Money value={p.amount} /></td>
-                <td><StatusBadge tone={p.resolution ? "neutral" : "warning"}>{p.match === "late" ? "Not paid yet" : p.match === "different" ? "Different amount" : "No lease"}{p.resolution ? ` → ${p.resolution.replace("_", " ")}` : ""}</StatusBadge></td>
+                <td><StatusBadge tone={p.resolution ? "neutral" : "warning"}>{p.match === "late" ? "Awaiting payment" : p.match === "different" ? "Different amount" : "No lease"}{p.resolution ? ` → ${p.resolution.replace("_", " ")}` : ""}</StatusBadge></td>
                 <td>{!locked && <Btn size="sm" onClick={() => { setOpen(p); setRes(p.match === "unmatched" ? "not_lease" : p.match === "late" ? "accrue" : "event"); setNote(p.resolutionNote ?? ""); }}>{p.resolution ? "Change" : "Resolve"}</Btn>}</td>
               </tr>
             );
@@ -285,15 +296,9 @@ function Matching({ period, payments, locked }: { period: string; payments: Actu
   );
 }
 
-function downloadBatch(st: LeasesState, b: JournalBatch) {
-  const gl: Record<string, string> = glOf(st)?.accounts ?? {};
-  downloadText(`${b.id}.csv`, toCsv([
-    ["batch_id", "period", "posting_date", "lease_code", "entity", "account", "gl_account", "debit", "credit", "currency", "narration", "catch_up", "idempotency_key"],
-    ...b.lines.map((l) => {
-      const lease = st.leases.find((x) => x.id === l.leaseId);
-      return [b.id, b.period, monthEnd(b.period), lease?.code ?? l.leaseId, st.entity?.name, ACCOUNT_LABELS[l.account], gl[l.account] ?? "", l.debit, l.credit, st.entity?.currency, `${lease?.name ?? ""} — ${l.kind}`, l.catchUp ? "Y" : "", `${b.idempotencyKey}:${l.leaseId}:${l.account}:${l.kind}`];
-    }),
-  ]));
+/** Server builds the ERP journal file (and marks the batch exported); we just save it. */
+async function downloadBatch(code: string) {
+  downloadText(`${code}.csv`, await exportBatch(code));
 }
 
 export { downloadBatch, BatchSummary };

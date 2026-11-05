@@ -1957,7 +1957,7 @@ a.ll-kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow-ho
 .ll-check.warn .ic { color: var(--warning); }
 .ll-check .d { font-size: var(--fs-caption); color: var(--text-muted); font-family: var(--font-mono); }
 .ll-clist { display: flex; flex-direction: column; }
-.ll-citem { display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items: start; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.ll-citem { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 16px; border-bottom: 1px solid var(--border); }
 .ll-citem:last-child { border-bottom: 0; }
 .ll-citem .n { width: 28px; height: 28px; border-radius: 99px; display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--fs-caption); background: var(--surface-sunken); color: var(--text-muted); border: 1px solid var(--border); }
 .ll-citem.done .n { background: var(--success); color: #fff; border-color: var(--success); }
@@ -1966,8 +1966,8 @@ a.ll-kpi:hover { border-color: var(--border-strong); box-shadow: var(--shadow-ho
 .ll-citem.locked { opacity: 0.6; }
 .ll-citem h3 { font-size: var(--fs-body); font-weight: var(--fw-semibold); color: var(--text); }
 .ll-citem .d { font-size: var(--fs-caption); color: var(--text-muted); margin-top: 2px; }
-.ll-citem .body { grid-column: 2 / -1; }
-@media (max-width: 640px) { .ll-citem { grid-template-columns: 28px 1fr; } .ll-citem > .act { grid-column: 2; } }
+.ll-citem .body { grid-column: 2 / -1; min-width: 0; }
+@media (max-width: 640px) { .ll-citem { grid-template-columns: 28px minmax(0, 1fr); } .ll-citem > .act { grid-column: 2; } }
 .ll-timeline { position: relative; display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 18px 4px 6px; scrollbar-width: thin; }
 .ll-tl-track { position: absolute; left: 0; right: 0; top: 24px; height: 2px; background: var(--border); }
 .ll-tl-fill { position: absolute; left: 0; top: 24px; height: 2px; background: var(--module-leases); }
