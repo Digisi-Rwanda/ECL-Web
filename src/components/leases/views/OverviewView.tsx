@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { Building2, Scale, Landmark, TrendingUp, CalendarClock, ArrowRight, FileUp, Plus, CheckCircle2 } from "lucide-react";
 import { D } from "@/lib/leases/engine";
-import { compactMoney, currentPeriod, fmtDate, periodLabel, persona, monthEnd } from "@/lib/leases/model";
+import { compactMoney, currentPeriod, fmtDate, periodLabel, member, monthEnd } from "@/lib/leases/model";
 import { setupStatus, closeOf } from "@/lib/leases/store";
 import { totalsAt, statusCounts, expiries, rollForward } from "@/lib/leases/portfolio";
 import { ASSET_CLASSES } from "@/lib/leases/types";
@@ -16,7 +16,7 @@ import { SetupChecklist } from "./SetupView";
 
 export function OverviewView() {
   const st = useLeasesState()!;
-  const me = persona(st);
+  const me = member(st);
   const setup = setupStatus(st);
   const ready = setup.entity && setup.periods && setup.policy && setup.rates;
   const period = currentPeriod(st);

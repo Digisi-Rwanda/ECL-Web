@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Settings2, CalendarDays } from "lucide-react";
-import { STATUS_META, currentPeriod, leaseStatus, periodLabel, persona } from "@/lib/leases/model";
+import { STATUS_META, currentPeriod, leaseStatus, periodLabel, member } from "@/lib/leases/model";
 import { setupStatus } from "@/lib/leases/store";
 import { StatusBadge, EmptyState, BtnLink, Person } from "@/components/ll/Kit";
 import { useLeasesState } from "./use-leases";
@@ -15,7 +15,7 @@ export function LeaseStatusBadge({ lease, status }: { lease?: Lease; status?: Le
 
 export function PersonById({ st, id }: { st: LeasesState; id?: string }) {
   if (!id) return <span className="ll-subtle">—</span>;
-  const p = persona(st, id);
+  const p = member(st, id);
   return <Person name={p.name} initials={p.initials} />;
 }
 
@@ -37,8 +37,8 @@ export function RequireSetup({ children, need = ["entity", "periods", "policy", 
   const s = setupStatus(st);
   const missing = need.filter((k) => !s[k]);
   if (!missing.length) return <>{children}</>;
-  const me = persona(st);
-  const admin = st.personas.find((p) => p.role === "administrator");
+  const me = member(st);
+  const admin = st.members.find((p) => p.role === "administrator");
   return (
     <div className="ll-card">
       <EmptyState

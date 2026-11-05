@@ -1,5 +1,5 @@
 import { addMonths, addDays, monthEnd } from "@/lib/leases/dates";
-import { approvedChain, currentPeriod, leaseStatus, pendingVersion, persona, todayISO } from "@/lib/leases/model";
+import { approvedChain, currentPeriod, leaseStatus, pendingVersion, member, todayISO } from "@/lib/leases/model";
 import { closeOf, setupStatus } from "@/lib/leases/store";
 import type { LeasesState } from "@/lib/leases/types";
 
@@ -13,9 +13,9 @@ export interface InboxItem {
   tone: "action" | "info" | "warning";
 }
 
-/** Everything that needs the current persona, derived from live state (never stored). */
+/** Everything that needs the current member, derived from live state (never stored). */
 export function inboxFor(st: LeasesState) {
-  const me = persona(st);
+  const me = member(st);
   const today = todayISO();
   const todo: InboxItem[] = [];
   const waiting: InboxItem[] = [];
@@ -26,11 +26,11 @@ export function inboxFor(st: LeasesState) {
     if (v?.status === "in_review") {
       const item: InboxItem = {
         id: `rv-${l.id}`, kind: "review", title: `${l.code} · ${l.name}`, tone: "action",
-        detail: `${v.event === "initial" ? "New lease" : `Change: ${v.event}`} · v${v.n} submitted by ${persona(st, v.submittedBy!).name}`,
+        detail: `${v.event === "initial" ? "New lease" : `Change: ${v.event}`} · v${v.n} submitted by ${member(st, v.submittedBy!).name}`,
         href: `/leases/${l.id}`, at: v.submittedAt ?? v.createdAt,
       };
       if (v.approverId === me.id) todo.push(item);
-      else if (v.submittedBy === me.id) waiting.push({ ...item, tone: "info", detail: `Waiting on ${persona(st, v.approverId!).name}` });
+      else if (v.submittedBy === me.id) waiting.push({ ...item, tone: "info", detail: `Waiting on ${member(st, v.approverId!).name}` });
     }
     if (v?.status === "returned" && v.createdBy === me.id) {
       const last = [...v.comments].reverse().find((c) => c.kind === "return");
@@ -84,7 +84,7 @@ export function inboxFor(st: LeasesState) {
 }
 
 export function leaseBadges(st: LeasesState) {
-  const me = persona(st);
+  const me = member(st);
   const inbox = inboxFor(st).todo.length;
   const drafts = st.leases.filter((l) => !approvedChain(l).length && pendingVersion(l)?.status !== "in_review").length;
   const imports = st.imports.filter((b) => b.status === "validating" || b.status === "committing" || b.status === "validated" || b.status === "mapping").length;

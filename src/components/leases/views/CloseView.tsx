@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { CalendarCheck, Play, Lock, Unlock, Download, CheckCircle2, RefreshCw, ChevronRight, Upload } from "lucide-react";
 import { D, ACCOUNT_LABELS } from "@/lib/leases/engine";
 import { monthEnd } from "@/lib/leases/dates";
-import { currentPeriod, fmtDateTime, glOf, periodLabel, persona, lastLocked } from "@/lib/leases/model";
+import { currentPeriod, fmtDateTime, glOf, periodLabel, member, lastLocked } from "@/lib/leases/model";
 import {
   closeOf, startClose, completeStep, stepIssues, generateBatch, resolvePayment, exportBatch, markPosted, lockPeriod, reopenPeriod,
   uploadPayments, confirmScheduledPayments,
@@ -102,7 +102,7 @@ function Close({ period }: { period: string }) {
     return (
       <>
         <PageHeader back={{ href: "/leases/close", label: "Period close" }} title={`${periodLabel(period)} close`} badge={<StatusBadge tone={locked ? "muted" : "success"}>{locked ? "Locked" : "Open"}</StatusBadge>} />
-        {p.reopenLog.length > 0 && !locked && <Banner tone="warning" title="This period was reopened">“{p.reopenLog.at(-1)!.reason}” — {persona(st, p.reopenLog.at(-1)!.by).name}, {fmtDateTime(p.reopenLog.at(-1)!.at)}. The previous batch was reversed; run the close again.</Banner>}
+        {p.reopenLog.length > 0 && !locked && <Banner tone="warning" title="This period was reopened">“{p.reopenLog.at(-1)!.reason}” — {member(st, p.reopenLog.at(-1)!.by).name}, {fmtDateTime(p.reopenLog.at(-1)!.at)}. The previous batch was reversed; run the close again.</Banner>}
         <Card>
           <EmptyState
             icon={CalendarCheck}
@@ -123,11 +123,11 @@ function Close({ period }: { period: string }) {
         back={{ href: "/leases/close", label: "Period close" }}
         title={`${periodLabel(period)} close`}
         badge={<StatusBadge tone={locked ? "muted" : "warning"}>{locked ? "Locked" : `${done} of 8 done`}</StatusBadge>}
-        sub={<>Started by {persona(st, c.startedBy).name} · {fmtDateTime(c.startedAt)}</>}
+        sub={<>Started by {member(st, c.startedBy).name} · {fmtDateTime(c.startedAt)}</>}
         actions={locked && last?.key === period && can(me.role, "admin") ? <Btn onClick={() => setReopenOpen(true)}><Unlock size={14} /> Reopen period</Btn> : undefined}
       />
-      {locked && <Banner tone="locked" title={`${periodLabel(period)} is locked`}>Locked by {persona(st, p.lockedBy).name} {fmtDateTime(p.lockedAt)}. Changes dated in this month post as catch-ups in the next open period.</Banner>}
-      {p.reopenLog.length > 0 && !locked && <Banner tone="warning" title="This period was reopened">“{p.reopenLog.at(-1)!.reason}” — {persona(st, p.reopenLog.at(-1)!.by).name}, {fmtDateTime(p.reopenLog.at(-1)!.at)}. The previous batch was reversed.</Banner>}
+      {locked && <Banner tone="locked" title={`${periodLabel(period)} is locked`}>Locked by {member(st, p.lockedBy).name} {fmtDateTime(p.lockedAt)}. Changes dated in this month post as catch-ups in the next open period.</Banner>}
+      {p.reopenLog.length > 0 && !locked && <Banner tone="warning" title="This period was reopened">“{p.reopenLog.at(-1)!.reason}” — {member(st, p.reopenLog.at(-1)!.by).name}, {fmtDateTime(p.reopenLog.at(-1)!.at)}. The previous batch was reversed.</Banner>}
       <div className="ll-progress" aria-hidden="true"><span style={{ width: `${(done / 8) * 100}%` }} /></div>
 
       <Card pad={false}>
@@ -142,7 +142,7 @@ function Close({ period }: { period: string }) {
                 <div>
                   <h3>{s.title}</h3>
                   <p className="d">{s.desc}</p>
-                  {finished && <p className="d">Done by {persona(st, step.doneBy).name} · {fmtDateTime(step.doneAt)}{step.note ? ` — “${step.note}”` : ""}</p>}
+                  {finished && <p className="d">Done by {member(st, step.doneBy).name} · {fmtDateTime(step.doneAt)}{step.note ? ` — “${step.note}”` : ""}</p>}
                 </div>
                 <div className="act">
                   {!locked && !finished && step.status !== "locked" && s.id !== "generate" && s.id !== "post" && s.id !== "matching" && (

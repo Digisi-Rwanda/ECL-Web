@@ -2,7 +2,7 @@
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { getState, subscribe, LeaseError } from "@/lib/leases/store";
-import { persona } from "@/lib/leases/model";
+import { member } from "@/lib/leases/model";
 import { toast } from "@/components/ll/toast";
 import type { LeasesState } from "@/lib/leases/types";
 
@@ -13,7 +13,7 @@ export function useLeasesState(): LeasesState | null {
 
 export function useMe() {
   const s = useLeasesState();
-  return s ? persona(s) : null;
+  return s ? member(s) : null;
 }
 
 /** Wraps a mutation: pending flag, toast on error, optional success toast. */

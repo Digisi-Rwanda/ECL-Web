@@ -14,7 +14,9 @@ const PILL: Record<Tone, string> = {
 };
 
 export function StatusBadge({ tone, children, dot = true }: { tone: Tone; children: React.ReactNode; dot?: boolean }) {
-  return <span className={PILL[tone]}>{dot && <span className="dot" aria-hidden="true" />}{children}</span>;
+  // raw status codes ("in_review", "posted") read as labels ("In review", "Posted")
+  const label = typeof children === "string" ? children.charAt(0).toUpperCase() + children.slice(1).replace(/_/g, " ") : children;
+  return <span className={PILL[tone]}>{dot && <span className="dot" aria-hidden="true" />}{label}</span>;
 }
 
 export function Money({ value, currency, className, dash }: { value?: string; currency?: string; className?: string; dash?: boolean }) {

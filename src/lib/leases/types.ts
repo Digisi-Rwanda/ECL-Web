@@ -3,7 +3,7 @@ import type { AccountKey, DayCount, EventType, JournalKind, LeaseTerms } from ".
 
 export type Role = "administrator" | "analyst" | "reviewer";
 
-export interface Persona {
+export interface Member {
   id: string;
   name: string;
   initials: string;
@@ -294,7 +294,7 @@ export interface ImportBatch {
 export interface Notification {
   id: string;
   at: string;
-  to: string; // persona id or "*"
+  to: string; // member id or "*"
   title: string;
   body: string;
   href: string;
@@ -313,9 +313,8 @@ export interface AuditEntry {
 export interface LeasesState {
   schema: 1;
   tenantId: string;
-  seededAs: "sample" | "empty" | "server";
-  personaId: string;
-  personas: Persona[];
+  meId: string;
+  members: Member[];
   entity?: Entity;
   book?: Book;
   periods: Period[];
@@ -333,7 +332,6 @@ export interface LeasesState {
   posted: Record<string, Record<string, string>>;
   savedViews: Array<{ id: string; name: string; query: string }>;
   importMapping?: Record<string, string>;
-  seq: { lease: number; batch: number; import: number; id: number };
   /** server-computed close step issues + reconciliations, per non-locked close */
   closeIssues?: Record<string, {
     steps: Partial<Record<CloseStepId, { errors: string[]; warnings: string[] }>>;

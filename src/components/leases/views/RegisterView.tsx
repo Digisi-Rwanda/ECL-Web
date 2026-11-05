@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Search, Plus, FileUp, Download, FileText, Bookmark, X } from "lucide-react";
-import { approvedChain, balancesAt, currentPeriod, fmtDate, leaseStatus, pendingVersion, persona, STATUS_META, todayISO, monthEnd, fmtDateTime } from "@/lib/leases/model";
+import { approvedChain, balancesAt, currentPeriod, fmtDate, leaseStatus, pendingVersion, member, STATUS_META, todayISO, monthEnd, fmtDateTime } from "@/lib/leases/model";
 import { saveView, deleteView } from "@/lib/leases/store";
 import { toCsv, downloadText } from "@/lib/leases/csv";
 import { ASSET_CLASSES, type Lease, type LeaseStatus } from "@/lib/leases/types";
@@ -34,7 +34,7 @@ interface Row {
 
 export function RegisterView({ drafts = false }: { drafts?: boolean }) {
   const st = useLeasesState()!;
-  const me = persona(st);
+  const me = member(st);
   const [q, setQ] = useQueryParam("q");
   const [f, setF] = useQueryParam("status", drafts ? "drafts" : "all");
   const [cls, setCls] = useQueryParam("class");
@@ -75,7 +75,7 @@ export function RegisterView({ drafts = false }: { drafts?: boolean }) {
       { key: "rou", header: "ROU NBV", num: true, sortValue: (r: Row) => Number(r.rou || 0), cell: (r: Row) => <Money value={r.rou} dash /> },
     ]),
     { key: "status", header: "Status", sortValue: (r) => STATUS_META[r.status].label, cell: (r) => <LeaseStatusBadge status={r.status} /> },
-    { key: "owner", header: "Owner", sortValue: (r) => persona(st, r.l.ownerId).name, cell: (r) => <PersonById st={st} id={r.l.ownerId} /> },
+    { key: "owner", header: "Owner", sortValue: (r) => member(st, r.l.ownerId).name, cell: (r) => <PersonById st={st} id={r.l.ownerId} /> },
   ];
   // default "needs attention first" order (returned → in review → drafts → the rest)
   const ordered = sortKey === "attention" ? [...shown].sort((a, b) => (`${attention(a)}${a.l.code}` < `${attention(b)}${b.l.code}` ? -1 : 1)) : shown;

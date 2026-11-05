@@ -7,7 +7,7 @@ import {
 import { buildCashFlows, D, exemptExpense, type ManualLine, type FlowKind } from "@/lib/leases/engine";
 import { addDays, addMonths, isISODate, monthsBetween, type ISODate } from "@/lib/leases/dates";
 import {
-  computeWithPending, curveOf, curveRate, exemptionHint, fmtDate, isLockedDate, pct, policyOf, pendingVersion, persona, termYears,
+  computeWithPending, curveOf, curveRate, exemptionHint, fmtDate, isLockedDate, pct, policyOf, pendingVersion, member, termYears,
   money, periodLabel, currentPeriod, approvedChain,
 } from "@/lib/leases/model";
 import {
@@ -274,7 +274,7 @@ function Wizard({ initial }: { initial?: Lease }) {
   const lockedStart = isISODate(t.commencementDate) && isLockedDate(st, t.commencementDate);
   const period = currentPeriod(st);
   const returned = [...(initial?.versions.at(-1)?.comments ?? [])].reverse().find((c) => c.kind === "return");
-  const reviewers = st.personas.filter((p) => p.id !== me.id && (p.role === "reviewer" || p.role === "administrator"));
+  const reviewers = st.members.filter((p) => p.id !== me.id && (p.role === "reviewer" || p.role === "administrator"));
   const notLease = a.identifiedAsset === false || a.rightToControl === false;
 
   const doCalculate = async () => {
@@ -299,7 +299,7 @@ function Wizard({ initial }: { initial?: Lease }) {
     if (!ok) { setBusy(null); return; }
     try {
       await submitForReview(idRef.current, revRef.current, approver, note);
-      toast("success", `Submitted to ${persona(st, approver).name} for review`);
+      toast("success", `Submitted to ${member(st, approver).name} for review`);
       router.push(`/leases/${idRef.current}`);
     } catch (e) {
       toast("danger", e instanceof Error ? e.message : "Submit failed");
@@ -322,7 +322,7 @@ function Wizard({ initial }: { initial?: Lease }) {
       {readOnly && <Banner tone="locked" title="Read-only">This draft belongs to <PersonById st={st} id={v.createdBy} />. Only they or an administrator can edit it.</Banner>}
       {save === "conflict" && <Banner tone="danger" title="This draft was changed somewhere else" action={<Btn size="sm" onClick={() => window.location.reload()}>Reload</Btn>}>Your latest edits weren&apos;t saved, so nothing was overwritten. Reload to continue from the newest version.</Banner>}
       {returned && v.status !== "in_review" && (
-        <Banner tone="warning" title={`Returned by ${persona(st, returned.by).name}`} action={returned.field ? <Btn size="sm" onClick={() => jump(returned.field === "options" ? "option" : returned.field!)}>Go to field</Btn> : undefined}>
+        <Banner tone="warning" title={`Returned by ${member(st, returned.by).name}`} action={returned.field ? <Btn size="sm" onClick={() => jump(returned.field === "options" ? "option" : returned.field!)}>Go to field</Btn> : undefined}>
           “{returned.text}”
         </Banner>
       )}
@@ -358,7 +358,7 @@ function Wizard({ initial }: { initial?: Lease }) {
                 {lockedStart && <Banner tone="warning" title={`Commences in a locked period (${periodLabel(t.commencementDate.slice(0, 7))})`}>That&apos;s fine — the catch-up for past months posts in {period ? periodLabel(period.key) : "the next open period"}. Locked months are never rewritten.</Banner>}
                 {lease.signatureDate && t.commencementDate && lease.signatureDate > t.commencementDate && <Banner tone="info">Signed after commencement — check the commencement date is when you got access, not when you signed.</Banner>}
                 <div className="ll-fields">
-                  <Field label="Owner" htmlFor="ow"><Select id="ow" value={lease.ownerId} onChange={(x) => patch((d) => { d.lease.ownerId = x; })} options={st.personas.map((p) => ({ value: p.id, label: p.name }))} /></Field>
+                  <Field label="Owner" htmlFor="ow"><Select id="ow" value={lease.ownerId} onChange={(x) => patch((d) => { d.lease.ownerId = x; })} options={st.members.map((p) => ({ value: p.id, label: p.name }))} /></Field>
                   <Field label="Cost centre" htmlFor="cc"><TextInput id="cc" value={lease.costCentre} onChange={(x) => patch((d) => { d.lease.costCentre = x; })} placeholder="e.g. CC-110" /></Field>
                   <Field label="Contract total (optional)" htmlFor="ct" hint="If the contract states a total, we compare it to the schedule."><MoneyInput id="ct" value={lease.contractTotal ?? ""} onChange={(x) => patch((d) => { d.lease.contractTotal = x; })} currency={cur} /></Field>
                 </div>

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { CheckCircle2, ArrowRight, Bell, Clock } from "lucide-react";
-import { fmtDateTime, persona } from "@/lib/leases/model";
+import { fmtDateTime, member } from "@/lib/leases/model";
 import { markNotificationsRead } from "@/lib/leases/store";
 import { PageHeader, Card, Tabs, EmptyState, StatusBadge, Btn } from "@/components/ll/Kit";
 import { useLeasesState, useQueryParam } from "../use-leases";
@@ -11,7 +11,7 @@ const KIND: Record<InboxItem["kind"], string> = { review: "Review", returned: "R
 
 export function InboxView() {
   const st = useLeasesState()!;
-  const me = persona(st);
+  const me = member(st);
   const [tab, setTab] = useQueryParam("tab", "todo");
   const box = inboxFor(st);
   const notes = st.notifications.filter((n) => n.to === me.id || n.to === "*" || (n.to === "*reviewer" && me.role !== "analyst"));

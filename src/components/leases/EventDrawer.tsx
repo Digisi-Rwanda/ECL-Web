@@ -99,7 +99,7 @@ export function EventDrawer({ lease, open, onOpenChange }: { lease: Lease; open:
       : q.agreed === true ? (q.newAsset === null ? null : q.newAsset ? "separate" : q.ends === null ? null : q.ends === "fully" ? "termination" : "modification")
         : null;
 
-  const reviewers = st.personas.filter((p) => p.id !== me.id && p.role !== "analyst");
+  const reviewers = st.members.filter((p) => p.id !== me.id && p.role !== "analyst");
   const submit = async () => {
     if (!draft || errors.length) return;
     if (!approver) { toast("danger", "Choose a reviewer."); return; }

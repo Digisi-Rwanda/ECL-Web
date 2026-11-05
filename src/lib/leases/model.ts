@@ -5,7 +5,7 @@ import {
 } from "./engine";
 import { addDays, monthEnd, monthKey, monthsBetween, nextMonthKey, type ISODate } from "./dates";
 import type {
-  Lease, LeaseStatus, LeasesState, LeaseVersion, IbrCurve, PolicyVersion, Period, Persona, Assessment, Versioned,
+  Lease, LeaseStatus, LeasesState, LeaseVersion, IbrCurve, PolicyVersion, Period, Member, Assessment, Versioned,
 } from "./types";
 
 export function todayISO(): ISODate {
@@ -13,8 +13,8 @@ export function todayISO(): ISODate {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function persona(s: LeasesState, id = s.personaId): Persona {
-  return s.personas.find((p) => p.id === id) ?? s.personas[0];
+export function member(s: LeasesState, id = s.meId): Member {
+  return s.members.find((p) => p.id === id) ?? s.members[0];
 }
 
 /** The version in force at a date: latest approved with effectiveFrom <= date, else the first approved. */

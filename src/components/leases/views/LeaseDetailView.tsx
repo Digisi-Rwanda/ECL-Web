@@ -7,7 +7,7 @@ import { D, ACCOUNT_LABELS } from "@/lib/leases/engine";
 import { monthEnd } from "@/lib/leases/dates";
 import {
   approvedChain, balancesAt, computeLease, computeVersions, computeWithPending, currentPeriod, enginePolicy, fmtDate, fmtDateTime, isExempt,
-  leaseStatus, pct, pendingVersion, persona, periodLabel, todayISO, glOf,
+  leaseStatus, pct, pendingVersion, member, periodLabel, todayISO, glOf,
 } from "@/lib/leases/model";
 import { decide, withdraw, documentUrl } from "@/lib/leases/store";
 import { toCsv, downloadText } from "@/lib/leases/csv";
@@ -120,7 +120,7 @@ function Detail({ lease }: { lease: Lease }) {
 
       {pend?.status === "in_review" && (
         <Banner tone="info" title={`${pend.event === "initial" ? "New lease" : EVENT_LABEL[pend.event]} v${pend.n} is in review`}>
-          Submitted by {persona(st, pend.submittedBy!).name} {fmtDateTime(pend.submittedAt)} · reviewer {persona(st, pend.approverId!).name}
+          Submitted by {member(st, pend.submittedBy!).name} {fmtDateTime(pend.submittedAt)} · reviewer {member(st, pend.approverId!).name}
           {pend.event !== "initial" && <> · effective {fmtDate(pend.effectiveDate)}. The books still show v{chain.at(-1)?.n} until it&apos;s approved.</>}
         </Banner>
       )}
@@ -192,7 +192,7 @@ function Detail({ lease }: { lease: Lease }) {
 
       {canReview && (
         <div className="ll-actionbar" role="region" aria-label="Review">
-          <span className="ll-save"><MessageSquare size={13} /> {pend!.approverId === me.id ? <>You&apos;re the reviewer for v{pend!.n}.</> : <>Assigned to {persona(st, pend!.approverId).name} — as an administrator you can also decide.</>} Check the schedules and checks first.</span>
+          <span className="ll-save"><MessageSquare size={13} /> {pend!.approverId === me.id ? <>You&apos;re the reviewer for v{pend!.n}.</> : <>Assigned to {member(st, pend!.approverId).name} — as an administrator you can also decide.</>} Check the schedules and checks first.</span>
           <span className="ll-spacer" />
           <Btn onClick={() => setDecision("return")}><CornerUpLeft size={14} /> Return</Btn>
           <Btn variant="primary" onClick={() => setDecision("approve")}><CheckCircle2 size={14} /> Approve</Btn>
@@ -203,7 +203,7 @@ function Detail({ lease }: { lease: Lease }) {
       <Modal
         open={!!decision}
         onOpenChange={(o) => !o && setDecision(null)}
-        title={decision === "approve" ? `Approve v${pend?.n}?` : `Return v${pend?.n} to ${persona(st, pend?.submittedBy).name}?`}
+        title={decision === "approve" ? `Approve v${pend?.n}?` : `Return v${pend?.n} to ${member(st, pend?.submittedBy).name}?`}
         footer={
           <>
             <Btn onClick={() => setDecision(null)}>Cancel</Btn>

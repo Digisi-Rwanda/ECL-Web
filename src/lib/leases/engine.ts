@@ -20,7 +20,10 @@ import {
 Decimal.set({ precision: 34, rounding: Decimal.ROUND_HALF_EVEN });
 export const D = (v: Decimal.Value) => new Decimal(v);
 const ZERO = D(0);
-export const r2 = (d: Decimal) => d.toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+export const r2 = (d: Decimal) => {
+  const q = d.toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+  return q.isZero() ? ZERO : q; // never "-0.00"
+};
 
 // ─── Inputs ────────────────────────────────────────────────────────────────
 

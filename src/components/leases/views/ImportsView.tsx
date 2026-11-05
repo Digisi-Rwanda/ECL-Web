@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Download, FileSpreadsheet, XCircle, AlertTriangle, CheckCircle2, RotateCcw, Send } from "lucide-react";
-import { fmtDateTime, persona } from "@/lib/leases/model";
+import { fmtDateTime, member } from "@/lib/leases/model";
 import {
   createImport, setImportMapping, acceptImportWarnings, startCommit, retryFailed, cancelImport, submitImported, refreshImport, importErrorsCsv,
   IMPORT_COLUMNS, IMPORT_TEMPLATE_VERSION, importTemplateRows,
@@ -86,7 +86,7 @@ export function ImportsView() {
                 <td>{b.fileName}</td>
                 <td><StatusBadge tone={STATUS_TONE[b.status]}>{b.status}</StatusBadge></td>
                 <td className="num">{b.rows.length || "—"}</td>
-                <td>{persona(st, b.createdBy).name}</td>
+                <td>{member(st, b.createdBy).name}</td>
                 <td className="ll-muted" style={{ fontSize: 12 }}>{fmtDateTime(b.createdAt)}</td>
               </tr>
             ))}</tbody>
@@ -132,7 +132,7 @@ export function ImportBatchView({ id }: { id: string }) {
   const failed = b.rows.filter((r) => r.outcome === "failed");
   const rows = b.rows.filter((r) => filter === "all" || (filter === "errors" ? r.issues.some((i) => i.severity === "error") : filter === "warnings" ? r.issues.some((i) => i.severity === "warning") : r.issues.length > 0 || r.outcome === "failed"));
   const errorFile = () => run("err", async () => downloadText(`${b.id}_errors.csv`, await importErrorsCsv(b.id)));
-  const reviewers = st.personas.filter((p) => p.id !== me.id && p.role !== "analyst");
+  const reviewers = st.members.filter((p) => p.id !== me.id && p.role !== "analyst");
 
   return (
     <>
