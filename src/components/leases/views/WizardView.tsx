@@ -183,38 +183,43 @@ function Wizard({ initial }: { initial?: Lease }) {
   const stepDone = (s: number) => (s < 3 ? Object.keys(errorsFor(s)).length === 0 : s === 3 ? !!v.calculated?.checksOk : false);
   const err = (k: string) => shownErrors[k];
 
+  // Creates the draft on first need (continue or upload); missing fields are warnings, not blockers.
+  const ensureDraft = async (to: number): Promise<boolean> => {
+    if (idRef.current) return true;
+    setBusy("create");
+    try {
+      const { id, rev } = await createDraft({ name: lease.name.trim(), assetClass: lease.assetClass, counterpartyId: lease.counterpartyId, location: lease.location });
+      idRef.current = id;
+      revRef.current = rev;
+      setSavedId(id);
+      const next = structuredClone(local);
+      next.lease.id = id;
+      next.lease.wizardStep = Math.max(next.lease.wizardStep, to);
+      await flush(next);
+      router.replace(`/leases/new?draft=${id}`, { scroll: false });
+      toast("success", "Draft saved — you can leave and come back any time.");
+      return true;
+    } catch (e) {
+      toast("danger", e instanceof Error ? e.message : "Couldn't create the draft.");
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const go = async (to: number) => {
     if (to > step) {
       const e = errorsFor(step);
-      if (Object.keys(e).length) {
-        setShownErrors(e);
-        return;
-      }
+      setShownErrors(e);
+      if (Object.keys(e).length) toast("info", `${Object.keys(e).length} field(s) still need attention — you can finish them later.`);
+      // The ledger needs a passing calculation; this is the one gate kept.
       if (step === 3 && !v.calculated?.checksOk) {
         toast("danger", "Calculate and pass every check before continuing.");
         return;
       }
-    }
-    setShownErrors({});
+    } else setShownErrors({});
     if (isNew) {
-      setBusy("create");
-      try {
-        const { id, rev } = await createDraft({ name: lease.name.trim(), assetClass: lease.assetClass, counterpartyId: lease.counterpartyId, location: lease.location });
-        idRef.current = id;
-        revRef.current = rev;
-        setSavedId(id);
-        const next = structuredClone(local);
-        next.lease.id = id;
-        next.lease.wizardStep = Math.max(next.lease.wizardStep, to);
-        await flush(next);
-        router.replace(`/leases/new?draft=${id}`, { scroll: false });
-        toast("success", "Draft saved — you can leave and come back any time.");
-      } catch (e) {
-        toast("danger", e instanceof Error ? e.message : "Couldn't create the draft.");
-        setBusy(null);
-        return;
-      }
-      setBusy(null);
+      if (!(await ensureDraft(to))) return;
     } else {
       const next = structuredClone(local);
       next.lease.wizardStep = Math.max(next.lease.wizardStep, to);
@@ -238,7 +243,7 @@ function Wizard({ initial }: { initial?: Lease }) {
   const [preview, setPreview] = useState<string | null>(null);
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    if (!idRef.current) { toast("info", "Fill in the name and lessor first — the draft is created when you continue."); return; }
+    if (!(await ensureDraft(step))) return;
     setDocBusy(true);
     for (const f of Array.from(files)) {
       if (f.size > 25 * 1024 * 1024) { toast("danger", `${f.name} is larger than 25 MB.`); continue; }
@@ -379,7 +384,7 @@ function Wizard({ initial }: { initial?: Lease }) {
                 >
                   <Upload size={18} className="ll-subtle" />
                   <span>Drop the signed contract here, or click to choose</span>
-                  <span className="ll-subtle" style={{ fontSize: 12 }}>PDF or image · up to 25 MB{isNew ? " · available after the draft is created" : ""}</span>
+                  <span className="ll-subtle" style={{ fontSize: 12 }}>PDF or image · up to 25 MB</span>
                 </div>
               ) : (
                 <ul className="ll-stack">
